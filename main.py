@@ -24,7 +24,7 @@ def NUM_CONST(n_classes):
 
 
 # load data
-X, y = load_data('wine')
+X, y = load_data('breast-cancer')
 n_classes = len(np.unique(y))
 
 classif_error = dict()
