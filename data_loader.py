@@ -31,6 +31,14 @@ def load_data(str_dataset):
         y = y.reshape(-1)
         assert X.shape == (690, 14)  # N*p
         assert y.shape == (690,)
+    elif str_dataset == 'mnist':
+        path = 'data/2k2k.mat'
+        matstruct_contents = sio.loadmat(path)
+        X = matstruct_contents['fea']
+        y = matstruct_contents['gnd']
+        y = y.reshape(-1)
+        assert X.shape == (4000, 784)  # N*p
+        assert y.shape == (4000,)
     else:
         error = 'Dataset ' + str_dataset + ' not available...'
         raise ValueError(error)
