@@ -19,7 +19,7 @@ def load_data(str_dataset):
         # BE CAREFUL: -1 are the missing values
         tmp = X[:, 5]
         mean = np.mean(tmp[tmp != -1])
-        X[:, 5][X[:, 5] == -1] = mean 
+        X[:, 5][X[:, 5] == -1] = mean
         assert (X >= 1).all()
         assert (X <= 10).all()
     else:
