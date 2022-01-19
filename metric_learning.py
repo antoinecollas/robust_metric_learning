@@ -37,9 +37,9 @@ def create_cost_egrad(S_train, D_train, rho):
     @pymanopt.function.Callable
     def cost(A):
         Q = np.real(np.einsum('ij,ji->i', S_train@A, S_train.T))
-        res = np.mean(rho(Q))
+        res = np.sum(rho(Q))
         Q = np.real(np.einsum('ij,ji->i', D_train@la.inv(A), D_train.T))
-        res = res + np.mean(rho(Q))
+        res = res + np.sum(rho(Q))
         return res
 
     @pymanopt.function.Callable
@@ -57,7 +57,9 @@ def RBL(S_train, D_train, rho):
     cost, egrad = create_cost_egrad(S_train, D_train, rho)
     manifold = HermitianPositiveDefinite(p)
     # solver = SteepestDescent(logverbosity=2)
-    solver = ConjugateGradient(maxiter=1e4, minstepsize=1e-10, logverbosity=2)
+    solver = ConjugateGradient(
+        maxiter=1e3, minstepsize=1e-10,
+        mingradnorm=1e-4, logverbosity=2)
     problem = Problem(manifold=manifold, cost=cost, egrad=egrad, verbosity=10)
     A, _ = solver.solve(problem, x=init)
     return A
