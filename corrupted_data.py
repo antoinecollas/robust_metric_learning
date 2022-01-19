@@ -12,14 +12,12 @@ from metric_learning import GMML, RBL
 SEED = 0
 rnd.seed(SEED)
 GMML_REG = 0
-GMML_t_CONST_1 = 0
-GMML_t_CONST_2 = 0.5
 RBL_REG = 0
 N_JOBS = -1
-N_RUNS = 3
+N_RUNS = 10
 TEST_SIZE = 0.5
 N_NEIGHBORS = 5
-CORRUPTED_PROPORTION = 0
+CORRUPTED_PROPORTIONS = [0, 0.5, 1]
 
 
 def NUM_CONST(n_classes):
@@ -30,83 +28,112 @@ def NUM_CONST(n_classes):
 X, y = load_data('breast-cancer')
 n_classes = len(np.unique(y))
 
-classif_error = dict()
-for i in range(N_RUNS):
-    # train test
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y,
-        test_size=TEST_SIZE,
-        random_state=SEED,
-        shuffle=True,
-        stratify=y
-    )
+for corrupted_proportion in CORRUPTED_PROPORTIONS:
+    classif_error = dict()
+    for i in range(N_RUNS):
+        # train test
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y,
+            test_size=TEST_SIZE,
+            random_state=SEED,
+            shuffle=True,
+            stratify=y
+        )
 
-    # similarity, dissimilarity
-    size = NUM_CONST(n_classes)
-    k1 = rnd.randint(low=0, high=X_train.shape[0], size=size)
-    k2 = rnd.randint(low=0, high=X_train.shape[0], size=size)
-    ss = (y[k1] == y[k2])
-    dd = (y[k1] != y[k2])
-    S_train = X[k1[ss]] - X[k2[ss]]
-    D_train = X[k1[dd]] - X[k2[dd]]
+        # similarity, dissimilarity
+        n_constraints = NUM_CONST(n_classes)
+        k1 = rnd.randint(low=0, high=X_train.shape[0], size=n_constraints)
+        k2 = rnd.randint(low=0, high=X_train.shape[0], size=n_constraints)
+        ss = (y[k1] == y[k2])
+        dd = (y[k1] != y[k2])
+        S_train = X[k1[ss]] - X[k2[ss]]
+        D_train = X[k1[dd]] - X[k2[dd]]
 
-    # corruption of S
-    # generate a new D matrix to corrupt S
-    k1 = rnd.randint(low=0, high=X_train.shape[0], size=size)
-    k2 = rnd.randint(low=0, high=X_train.shape[0], size=size)
-    dd = (y[k1] != y[k2])
-    tmp_D_train = X[k1[dd]] - X[k2[dd]]
-    size = int(size*CORRUPTED_PROPORTION)
-    k1 = rnd.randint(low=0, high=S_train.shape[0], size=size)
-    k2 = rnd.randint(low=0, high=tmp_D_train.shape[0], size=size)
-    S_train[k1] = tmp_D_train[k2]
+        # corruption of S
+        # generate a new D matrix to corrupt S
+        k1 = rnd.randint(low=0, high=X_train.shape[0], size=n_constraints)
+        k2 = rnd.randint(low=0, high=X_train.shape[0], size=n_constraints)
+        dd = (y[k1] != y[k2])
+        tmp_D_train = X[k1[dd]] - X[k2[dd]]
+        n_corrupted = int(S_train.shape[0]*corrupted_proportion)
+        k1 = rnd.randint(low=0, high=S_train.shape[0], size=n_corrupted)
+        k2 = rnd.randint(low=0, high=tmp_D_train.shape[0], size=n_corrupted)
+        S_train[k1] = tmp_D_train[k2]
 
-    metrics = dict()
+        # corruption of D
+        # generate a new S matrix to corrupt D
+        k1 = rnd.randint(low=0, high=X_train.shape[0], size=n_constraints)
+        k2 = rnd.randint(low=0, high=X_train.shape[0], size=n_constraints)
+        ss = (y[k1] == y[k2])
+        tmp_S_train = X[k1[ss]] - X[k2[ss]]
+        n_corrupted = int(D_train.shape[0]*corrupted_proportion)
+        k1 = rnd.randint(low=0, high=D_train.shape[0], size=n_corrupted)
+        k2 = rnd.randint(low=0, high=tmp_S_train.shape[0], size=n_corrupted)
+        D_train[k1] = tmp_S_train[k2]
 
-    # Euclidean
-    _, p = X.shape
-    metrics['Euclidean'] = np.eye(p)
+        metrics = dict()
 
-    # GMML
-    A = GMML(S_train, D_train, GMML_t_CONST_1, reg=GMML_REG)
-    A_sqrt = powm(A, 0.5)
-    metrics['GMML_' + str(GMML_t_CONST_1)] = A_sqrt
+        # Euclidean
+        _, p = X.shape
+        metrics['Euclidean'] = np.eye(p)
 
-    A = GMML(S_train, D_train, GMML_t_CONST_2, reg=GMML_REG)
-    A_sqrt = powm(A, 0.5)
-    metrics['GMML_' + str(GMML_t_CONST_2)] = A_sqrt
+        # GMML
+        t_consts = [0, 0.5, 1]
+        for t in t_consts:
+            A = GMML(S_train, D_train, t, reg=GMML_REG)
+            A_sqrt = powm(A, 0.5)
+            metrics['GMML_' + str(t)] = A_sqrt
 
-    # RBL
-    def rho(t):
-        return np.log(1 + t)
-    A = RBL(S_train, D_train, rho, reg=RBL_REG)
-    A_sqrt = powm(A, 0.5)
-    metrics['RBL'] = A_sqrt
+        # RBL
+        def rho(t):
+            return t
+        A = RBL(S_train, D_train, rho, reg=RBL_REG)
+        A_sqrt = powm(A, 0.5)
+        metrics['RBL_t'] = A_sqrt
 
+        def rho(t):
+            return np.log(1e-15 + t)
+        A = RBL(S_train, D_train, rho, reg=RBL_REG)
+        A_sqrt = powm(A, 0.5)
+        metrics['RBL_log_t'] = A_sqrt
+
+        def rho(t):
+            return np.log(1 + t)
+        A = RBL(S_train, D_train, rho, reg=RBL_REG)
+        A_sqrt = powm(A, 0.5)
+        metrics['RBL_log_1+t'] = A_sqrt
+
+        def rho(t):
+            return np.log(1e-15 + t)
+        A = RBL(S_train, D_train, rho, reg=RBL_REG)
+        A_sqrt = powm(A, 0.5)
+        metrics['RBL_log_t'] = A_sqrt
+
+        for metric in metrics:
+            A_sqrt = metrics[metric]
+
+            # k-nn
+            X_train_A = X_train@A_sqrt
+            X_test_A = X_test@A_sqrt
+            knn = KNeighborsClassifier(n_neighbors=N_NEIGHBORS, n_jobs=N_JOBS)
+            knn.fit(X_train_A, y_train)
+            y_pred = knn.predict(X_test_A)
+
+            # error
+            error = np.mean(y_pred != y_test)
+            if metric not in classif_error:
+                classif_error[metric] = list()
+            classif_error[metric].append(error)
+
+    print()
+    print('Percentage of corrupted data:', corrupted_proportion*100, '%')
+    print('Classification errors:')
+    print('-------------------------------')
     for metric in metrics:
-        A_sqrt = metrics[metric]
-
-        # k-nn
-        X_train_A = X_train@A_sqrt
-        X_test_A = X_test@A_sqrt
-        knn = KNeighborsClassifier(n_neighbors=N_NEIGHBORS, n_jobs=N_JOBS)
-        knn.fit(X_train_A, y_train)
-        y_pred = knn.predict(X_test_A)
-
-        # error
-        error = np.mean(y_pred != y_test)
-        if metric not in classif_error:
-            classif_error[metric] = list()
-        classif_error[metric].append(error)
-
-print('Percentage of corrupted data:', CORRUPTED_PROPORTION*100, '%')
-print('Classification errors:')
-print('-------------------------------')
-for metric in metrics:
-    mean_error = np.mean(classif_error[metric])*100
-    std_error = np.std(classif_error[metric])*100
-    str_print = metric
-    str_print += ': ' + str(round(mean_error, 2)) + '%'
-    str_print += ' +- ' + str(round(std_error, 2))
-    print(str_print)
-print('-------------------------------')
+        mean_error = np.mean(classif_error[metric])*100
+        std_error = np.std(classif_error[metric])*100
+        str_print = metric
+        str_print += ': ' + str(round(mean_error, 2)) + '%'
+        str_print += ' +- ' + str(round(std_error, 2))
+        print(str_print)
+    print('-------------------------------')
