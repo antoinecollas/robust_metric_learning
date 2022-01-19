@@ -16,7 +16,7 @@ GMML_t_CONST_1 = 0
 GMML_t_CONST_2 = 0.5
 RBL_REG = 0
 N_JOBS = -1
-N_RUNS = 10
+N_RUNS = 3
 TEST_SIZE = 0.5
 N_NEIGHBORS = 5
 
@@ -65,7 +65,7 @@ for i in range(N_RUNS):
 
     # RBL
     def rho(t):
-        return t
+        return np.log(1 + t)
     A = RBL(S_train, D_train, rho, reg=RBL_REG)
     A_sqrt = powm(A, 0.5)
     metrics['RBL'] = A_sqrt

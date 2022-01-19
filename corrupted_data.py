@@ -78,7 +78,7 @@ for i in range(N_RUNS):
 
     # RBL
     def rho(t):
-        return t*t
+        return np.log(1 + t)
     A = RBL(S_train, D_train, rho, reg=RBL_REG)
     A_sqrt = powm(A, 0.5)
     metrics['RBL'] = A_sqrt
