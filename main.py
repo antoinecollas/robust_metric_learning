@@ -1,9 +1,9 @@
 import autograd.numpy as np
 import autograd.numpy.random as rnd
-from sklearn.datasets import load_wine
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 
+from data_loader import load_data
 from matrix_operators import powm
 from metric_learning import GMML, RBL
 
@@ -13,7 +13,7 @@ SEED = 0
 t_CONST_GMML_1 = 0
 t_CONST_GMML_2 = 0.5
 N_JOBS = -1
-N_RUNS = 1
+N_RUNS = 10
 TEST_SIZE = 0.5
 N_NEIGHBORS = 5
 rnd.seed(SEED)
@@ -24,12 +24,7 @@ def NUM_CONST(n_classes):
 
 
 # load data
-data = load_wine()
-X = data.data
-y = data.target
-print(type(X))
-assert X.shape == (178, 13)  # N*p
-assert y.shape == (178,)
+X, y = load_data('wine')
 n_classes = len(np.unique(y))
 
 classif_error = dict()
@@ -88,6 +83,13 @@ for i in range(N_RUNS):
             classif_error[metric] = list()
         classif_error[metric].append(error)
 
+print('Classification errors:')
+print('-------------------------------')
 for metric in metrics:
-    error = np.mean(classif_error[metric])
-    print(metric, '- classification error:', round(error*100, 2), '%')
+    mean_error = np.mean(classif_error[metric])*100
+    std_error = np.std(classif_error[metric])*100
+    str_print = metric
+    str_print += ': ' + str(round(mean_error, 2)) + '%'
+    str_print += ' +- ' + str(round(std_error, 2))
+    print(str_print)
+print('-------------------------------')
