@@ -5,7 +5,7 @@ from sklearn.neighbors import KNeighborsClassifier
 
 from data_loader import load_data
 from matrix_operators import powm
-from metric_learning import GMML, RBL
+from metric_learning import GMML, RML
 
 
 # constants
@@ -13,7 +13,7 @@ SEED = 0
 rnd.seed(SEED)
 DATASET = 'breast-cancer'
 GMML_REG = 0
-RBL_REG = 0
+RML_REG = 0
 N_JOBS = -1
 N_RUNS = 10
 TEST_SIZE = 0.5
@@ -85,30 +85,30 @@ for corrupted_proportion in CORRUPTED_PROPORTIONS:
             A_sqrt = powm(A, 0.5)
             metrics['GMML_' + str(t)] = A_sqrt
 
-        # RBL
+        # RML
         def rho(t):
             return t
-        A = RBL(S_train, D_train, rho, reg=RBL_REG)
+        A = RML(S_train, D_train, rho, reg=RML_REG)
         A_sqrt = powm(A, 0.5)
-        metrics['RBL_t'] = A_sqrt
+        metrics['RML_t'] = A_sqrt
 
         def rho(t):
             return np.log(1e-15 + t)
-        A = RBL(S_train, D_train, rho, reg=RBL_REG)
+        A = RML(S_train, D_train, rho, reg=RML_REG)
         A_sqrt = powm(A, 0.5)
-        metrics['RBL_log_t'] = A_sqrt
+        metrics['RML_log_t'] = A_sqrt
 
         def rho(t):
             return np.log(1 + t)
-        A = RBL(S_train, D_train, rho, reg=RBL_REG)
+        A = RML(S_train, D_train, rho, reg=RML_REG)
         A_sqrt = powm(A, 0.5)
-        metrics['RBL_log_1+t'] = A_sqrt
+        metrics['RML_log_1+t'] = A_sqrt
 
         def rho(t):
             return np.log(1e-15 + t)
-        A = RBL(S_train, D_train, rho, reg=RBL_REG)
+        A = RML(S_train, D_train, rho, reg=RML_REG)
         A_sqrt = powm(A, 0.5)
-        metrics['RBL_log_t'] = A_sqrt
+        metrics['RML_log_t'] = A_sqrt
 
         for metric in metrics:
             A_sqrt = metrics[metric]

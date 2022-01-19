@@ -5,7 +5,7 @@ from sklearn.neighbors import KNeighborsClassifier
 
 from data_loader import load_data
 from matrix_operators import powm
-from metric_learning import GMML, RBL
+from metric_learning import GMML, RML
 
 
 # constants
@@ -14,7 +14,7 @@ rnd.seed(SEED)
 GMML_REG = 0
 GMML_t_CONST_1 = 0
 GMML_t_CONST_2 = 0.5
-RBL_REG = 0
+RML_REG = 0
 N_JOBS = -1
 N_RUNS = 3
 TEST_SIZE = 0.5
@@ -63,12 +63,12 @@ for i in range(N_RUNS):
     A_sqrt = powm(A, 0.5)
     metrics['GMML_' + str(GMML_t_CONST_2)] = A_sqrt
 
-    # RBL
+    # RML
     def rho(t):
         return np.log(1 + t)
-    A = RBL(S_train, D_train, rho, reg=RBL_REG)
+    A = RML(S_train, D_train, rho, reg=RML_REG)
     A_sqrt = powm(A, 0.5)
-    metrics['RBL'] = A_sqrt
+    metrics['RML'] = A_sqrt
 
     for metric in metrics:
         A_sqrt = metrics[metric]

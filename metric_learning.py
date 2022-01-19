@@ -66,7 +66,7 @@ def create_cost_egrad(S_train, D_train, rho, reg):
     return cost, auto_egrad
 
 
-def RBL(S_train, D_train, rho, reg):
+def RML(S_train, D_train, rho, reg):
     p = S_train.shape[1]
     init = np.eye(p)
 
