@@ -22,11 +22,15 @@ def SPD_mean(A, B, t=0.5):
 
 
 def GMML(S_train, D_train, t, reg):
+    # S
     N, p = S_train.shape
     S = (1/N) * S_train.T@S_train
     S = S + reg*np.eye(p)
+
+    # D
     N, _ = D_train.shape
     D = (1/N) * D_train.T@D_train
+    D = D + reg*np.eye(p)
 
     S_inv = powm(S, -1)
     A = SPD_mean(S_inv, D, t)
