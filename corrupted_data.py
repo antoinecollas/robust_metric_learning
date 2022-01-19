@@ -49,7 +49,7 @@ for i in range(N_RUNS):
     dd = (y[k1] != y[k2])
     S_train = X[k1[ss]] - X[k2[ss]]
     D_train = X[k1[dd]] - X[k2[dd]]
-    
+
     # corruption of S
     # generate a new D matrix to corrupt S
     k1 = rnd.randint(low=0, high=X_train.shape[0], size=size)
@@ -78,7 +78,7 @@ for i in range(N_RUNS):
 
     # RBL
     def rho(t):
-        return np.log(1 + t)
+        return t*t
     A = RBL(S_train, D_train, rho, reg=RBL_REG)
     A_sqrt = powm(A, 0.5)
     metrics['RBL'] = A_sqrt
