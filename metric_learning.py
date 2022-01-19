@@ -21,9 +21,12 @@ def SPD_mean(A, B, t=0.5):
     return mean
 
 
-def GMML(S_train, D_train, t):
-    S = S_train.T@S_train
-    D = D_train.T@D_train
+def GMML(S_train, D_train, t, reg):
+    N, p = S_train.shape
+    S = (1/N) * S_train.T@S_train
+    S = S + reg*np.eye(p)
+    N, _ = D_train.shape
+    D = (1/N) * D_train.T@D_train
 
     S_inv = powm(S, -1)
     A = SPD_mean(S_inv, D, t)
@@ -33,13 +36,21 @@ def GMML(S_train, D_train, t):
 
 # robust metric learning
 
-def create_cost_egrad(S_train, D_train, rho):
+def create_cost_egrad(S_train, D_train, rho, reg):
+    N, p = S_train.shape
+    S = (1/N) * S_train.T@S_train
+    S_inv = powm(S, -1)
+    A_0 = S_inv
+
     @pymanopt.function.Callable
     def cost(A):
         Q = np.real(np.einsum('ij,ji->i', S_train@A, S_train.T))
-        res = np.sum(rho(Q))
+        res = np.mean(rho(Q))
         Q = np.real(np.einsum('ij,ji->i', D_train@la.inv(A), D_train.T))
-        res = res + np.sum(rho(Q))
+        res = res + np.mean(rho(Q))
+        A_0_inv = la.inv(A_0)
+        penalty = np.trace(A@A_0_inv) + np.trace(la.inv(A)@A_0)
+        res = (1-reg)*res + reg*penalty
         return res
 
     @pymanopt.function.Callable
@@ -50,11 +61,11 @@ def create_cost_egrad(S_train, D_train, rho):
     return cost, auto_egrad
 
 
-def RBL(S_train, D_train, rho):
+def RBL(S_train, D_train, rho, reg):
     p = S_train.shape[1]
     init = np.eye(p)
 
-    cost, egrad = create_cost_egrad(S_train, D_train, rho)
+    cost, egrad = create_cost_egrad(S_train, D_train, rho, reg)
     manifold = HermitianPositiveDefinite(p)
     # solver = SteepestDescent(logverbosity=2)
     solver = ConjugateGradient(

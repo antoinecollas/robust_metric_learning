@@ -10,13 +10,15 @@ from metric_learning import GMML, RBL
 
 # constants
 SEED = 0
-t_CONST_GMML_1 = 0
-t_CONST_GMML_2 = 0.5
+rnd.seed(SEED)
+GMML_REG = 0
+GMML_t_CONST_1 = 0
+GMML_t_CONST_2 = 0.5
+RBL_REG = 0
 N_JOBS = -1
 N_RUNS = 10
 TEST_SIZE = 0.5
 N_NEIGHBORS = 5
-rnd.seed(SEED)
 
 
 def NUM_CONST(n_classes):
@@ -53,24 +55,20 @@ for i in range(N_RUNS):
     metrics['Euclidean'] = np.eye(p)
 
     # GMML
-    A = GMML(S_train, D_train, t_CONST_GMML_1)
+    A = GMML(S_train, D_train, GMML_t_CONST_1, reg=GMML_REG)
     A_sqrt = powm(A, 0.5)
-    metrics['GMML_' + str(t_CONST_GMML_1)] = A_sqrt
+    metrics['GMML_' + str(GMML_t_CONST_1)] = A_sqrt
 
-    A = GMML(S_train, D_train, t_CONST_GMML_2)
+    A = GMML(S_train, D_train, GMML_t_CONST_2, reg=GMML_REG)
     A_sqrt = powm(A, 0.5)
-    metrics['GMML_' + str(t_CONST_GMML_2)] = A_sqrt
+    metrics['GMML_' + str(GMML_t_CONST_2)] = A_sqrt
 
     # RBL
     def rho(t):
         return t
-    A = RBL(S_train, D_train, rho)
+    A = RBL(S_train, D_train, rho, reg=RBL_REG)
     A_sqrt = powm(A, 0.5)
     metrics['RBL'] = A_sqrt
-    # import numpy.linalg as la
-    # print(la.norm(metrics['RBL'] - metrics['GMML'])/la.norm(metrics['GMML']))
-    # print(la.norm(metrics['Euclidean'] -
-    # metrics['GMML'])/la.norm(metrics['GMML']))
 
     for metric in metrics:
         A_sqrt = metrics[metric]
