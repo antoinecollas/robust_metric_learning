@@ -55,7 +55,7 @@ def create_cost_egrad(S_train, D_train, rho, reg):
         A_0_inv = la.inv(A_0)
         penalty = np.trace(A@A_0_inv) + np.trace(la.inv(A)@A_0)
         penalty = np.real(penalty)
-        res = (1-reg)*res + reg*penalty
+        res = res + reg*penalty
         return res
 
     @pymanopt.function.Callable
