@@ -11,6 +11,7 @@ from metric_learning import GMML, RBL
 # constants
 SEED = 0
 rnd.seed(SEED)
+DATASET = 'breast-cancer'
 GMML_REG = 0
 RBL_REG = 0
 N_JOBS = -1
@@ -25,7 +26,7 @@ def NUM_CONST(n_classes):
 
 
 # load data
-X, y = load_data('breast-cancer')
+X, y = load_data(DATASET)
 n_classes = len(np.unique(y))
 
 for corrupted_proportion in CORRUPTED_PROPORTIONS:
@@ -116,8 +117,9 @@ for corrupted_proportion in CORRUPTED_PROPORTIONS:
             X_train_A = X_train@A_sqrt
             X_test_A = X_test@A_sqrt
             knn = KNeighborsClassifier(n_neighbors=N_NEIGHBORS, n_jobs=N_JOBS)
-            knn.fit(X_train_A, y_train)
-            y_pred = knn.predict(X_test_A)
+            classifier = KNeighborsClassifier()
+            classifier.fit(X_train_A, y_train)
+            y_pred = classifier.predict(X_test_A)
 
             # error
             error = np.mean(y_pred != y_test)
