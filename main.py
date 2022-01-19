@@ -31,7 +31,12 @@ classif_error = dict()
 for i in range(N_RUNS):
     # train test
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=TEST_SIZE, random_state=SEED)
+        X, y,
+        test_size=TEST_SIZE,
+        random_state=SEED,
+        shuffle=True,
+        stratify=y
+    )
 
     # similarity, dissimilarity
     k1 = rnd.randint(low=0, high=X_train.shape[0], size=NUM_CONST(n_classes))
