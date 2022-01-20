@@ -6,6 +6,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from data_loader import load_data
 from matrix_operators import powm
 from metric_learning import GMML, RML
+from utils import create_S_D
 
 
 # constants
@@ -42,31 +43,19 @@ for corrupted_proportion in CORRUPTED_PROPORTIONS:
         )
 
         # similarity, dissimilarity
-        n_constraints = NUM_CONST(n_classes)
-        k1 = rnd.randint(low=0, high=X_train.shape[0], size=n_constraints)
-        k2 = rnd.randint(low=0, high=X_train.shape[0], size=n_constraints)
-        ss = (y[k1] == y[k2])
-        dd = (y[k1] != y[k2])
-        S_train = X[k1[ss]] - X[k2[ss]]
-        D_train = X[k1[dd]] - X[k2[dd]]
+        S_train, D_train = create_S_D(X_train, y_train, NUM_CONST(n_classes))
+
+        # generate new matrices S and D to corrupt
+        tmp_S_train, tmp_D_train = create_S_D(
+            X_train, y_train, NUM_CONST(n_classes))
 
         # corruption of S
-        # generate a new D matrix to corrupt S
-        k1 = rnd.randint(low=0, high=X_train.shape[0], size=n_constraints)
-        k2 = rnd.randint(low=0, high=X_train.shape[0], size=n_constraints)
-        dd = (y[k1] != y[k2])
-        tmp_D_train = X[k1[dd]] - X[k2[dd]]
         n_corrupted = int(S_train.shape[0]*corrupted_proportion)
         k1 = rnd.randint(low=0, high=S_train.shape[0], size=n_corrupted)
         k2 = rnd.randint(low=0, high=tmp_D_train.shape[0], size=n_corrupted)
         S_train[k1] = tmp_D_train[k2]
 
         # corruption of D
-        # generate a new S matrix to corrupt D
-        k1 = rnd.randint(low=0, high=X_train.shape[0], size=n_constraints)
-        k2 = rnd.randint(low=0, high=X_train.shape[0], size=n_constraints)
-        ss = (y[k1] == y[k2])
-        tmp_S_train = X[k1[ss]] - X[k2[ss]]
         n_corrupted = int(D_train.shape[0]*corrupted_proportion)
         k1 = rnd.randint(low=0, high=D_train.shape[0], size=n_corrupted)
         k2 = rnd.randint(low=0, high=tmp_S_train.shape[0], size=n_corrupted)

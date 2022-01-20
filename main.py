@@ -6,6 +6,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from data_loader import load_data
 from matrix_operators import powm
 from metric_learning import GMML, RML
+from utils import create_S_D
 
 
 # constants
@@ -40,12 +41,7 @@ for i in range(N_RUNS):
     )
 
     # similarity, dissimilarity
-    k1 = rnd.randint(low=0, high=X_train.shape[0], size=NUM_CONST(n_classes))
-    k2 = rnd.randint(low=0, high=X_train.shape[0], size=NUM_CONST(n_classes))
-    ss = (y[k1] == y[k2])
-    dd = (y[k1] != y[k2])
-    S_train = X[k1[ss]] - X[k2[ss]]
-    D_train = X[k1[dd]] - X[k2[dd]]
+    S_train, D_train = create_S_D(X_train, y_train, NUM_CONST(n_classes))
 
     metrics = dict()
 
