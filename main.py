@@ -58,10 +58,22 @@ for i in range(N_RUNS):
 
     # RML
     def rho(t):
+        return t
+    A = RML(S_train, D_train, rho, reg=RML_REG)
+    A_sqrt = powm(A, 0.5)
+    metrics['RML_t'] = A_sqrt
+
+    def rho(t):
+        return np.log(1e-15 + t)
+    A = RML(S_train, D_train, rho, reg=RML_REG)
+    A_sqrt = powm(A, 0.5)
+    metrics['RML_log_t'] = A_sqrt
+
+    def rho(t):
         return np.log(1 + t)
     A = RML(S_train, D_train, rho, reg=RML_REG)
     A_sqrt = powm(A, 0.5)
-    metrics['RML'] = A_sqrt
+    metrics['RML_log_1+t'] = A_sqrt
 
     for metric in metrics:
         A_sqrt = metrics[metric]
