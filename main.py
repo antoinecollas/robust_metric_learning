@@ -2,6 +2,7 @@ import autograd.numpy as np
 import autograd.numpy.random as rnd
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
+from tqdm import tqdm
 
 from data_loader import load_data
 from matrix_operators import powm
@@ -29,7 +30,7 @@ X, y = load_data(DATASET)
 n_classes = len(np.unique(y))
 
 classif_error = dict()
-for i in range(N_RUNS):
+for i in tqdm(range(N_RUNS)):
     # train test
     X_train, X_test, y_train, y_test = train_test_split(
         X, y,
