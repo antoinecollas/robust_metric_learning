@@ -42,9 +42,11 @@ def GMML(S_train, D_train, t, reg):
 
 def create_cost_egrad(S_train, D_train, rho, reg):
     N, p = S_train.shape
-    S = (1/N) * S_train.T@S_train
-    S_inv = powm(S, -1)
-    A_0 = S_inv
+    # S = (1/N) * S_train.T@S_train
+    # S_inv = powm(S, -1)
+    # A_0 = S_inv
+    A_0 = np.eye(p)
+    A_0_inv = la.inv(A_0)
 
     @pymanopt.function.Callable
     def cost(A):
@@ -52,7 +54,6 @@ def create_cost_egrad(S_train, D_train, rho, reg):
         res = np.mean(rho(Q))
         Q = np.real(np.einsum('ij,ji->i', D_train@la.inv(A), D_train.T))
         res = res + np.mean(rho(Q))
-        A_0_inv = la.inv(A_0)
         penalty = np.trace(A@A_0_inv) + np.trace(la.inv(A)@A_0)
         penalty = np.real(penalty)
         res = res + reg*penalty
