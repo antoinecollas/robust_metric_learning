@@ -11,9 +11,8 @@ from metric_learning import GMML, RML
 # constants
 SEED = 0
 rnd.seed(SEED)
+DATASET = 'breast-cancer'
 GMML_REG = 0
-GMML_t_CONST_1 = 0
-GMML_t_CONST_2 = 0.5
 RML_REG = 0
 N_JOBS = -1
 N_RUNS = 3
@@ -26,7 +25,7 @@ def NUM_CONST(n_classes):
 
 
 # load data
-X, y = load_data('breast-cancer')
+X, y = load_data(DATASET)
 n_classes = len(np.unique(y))
 
 classif_error = dict()
@@ -55,13 +54,11 @@ for i in range(N_RUNS):
     metrics['Euclidean'] = np.eye(p)
 
     # GMML
-    A = GMML(S_train, D_train, GMML_t_CONST_1, reg=GMML_REG)
-    A_sqrt = powm(A, 0.5)
-    metrics['GMML_' + str(GMML_t_CONST_1)] = A_sqrt
-
-    A = GMML(S_train, D_train, GMML_t_CONST_2, reg=GMML_REG)
-    A_sqrt = powm(A, 0.5)
-    metrics['GMML_' + str(GMML_t_CONST_2)] = A_sqrt
+    t_consts = [0, 0.5, 1]
+    for t in t_consts:
+        A = GMML(S_train, D_train, t, reg=GMML_REG)
+        A_sqrt = powm(A, 0.5)
+        metrics['GMML_' + str(t)] = A_sqrt
 
     # RML
     def rho(t):
