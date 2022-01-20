@@ -48,27 +48,29 @@ for i in range(N_RUNS):
     _, p = X.shape
     metrics['Euclidean'] = np.eye(p)
 
-    # GMML
+    # Riemannian metric learning
     t_consts = [0, 0.5, 1]
+
+    # GMML
     for t in t_consts:
         A = GMML(S_train, D_train, t, reg=GMML_REG)
         A_sqrt = powm(A, 0.5)
         metrics['GMML_' + str(t)] = A_sqrt
 
     # RML
-    alphas = [0, 0.5, 1]
-    for alpha in alphas:
+    reg_test = 1e-6
+    for alpha in t_consts:
         def rho(t):
             return t
-        A = RML(S_train, D_train, rho, reg=0, alpha=alpha)
+        A = RML(S_train, D_train, rho, reg=reg_test, alpha=alpha)
         A_sqrt = powm(A, 0.5)
         # metrics['RML_alpha_'+str(alpha)+'_rho_t'] = A_sqrt
         metrics['RML_rho_t_alpha_'+str(alpha)] = A_sqrt
 
-    for alpha in alphas:
+    for alpha in t_consts:
         def rho(t):
-            return np.log(1 + t)
-        A = RML(S_train, D_train, rho, reg=0.1, alpha=alpha)
+            return np.log(1e-10 + t)
+        A = RML(S_train, D_train, rho, reg=reg_test, alpha=alpha)
         A_sqrt = powm(A, 0.5)
         metrics['RML_rho_log_1+t_alpha_'+str(alpha)] = A_sqrt
 
