@@ -12,9 +12,8 @@ from utils import create_S_D
 # constants
 SEED = 0
 rnd.seed(SEED)
-DATASET = 'breast-cancer'
+DATASET = 'wine'
 GMML_REG = 0
-RML_REG = 0
 N_JOBS = -1
 N_RUNS = 3
 TEST_SIZE = 0.5
@@ -57,23 +56,21 @@ for i in range(N_RUNS):
         metrics['GMML_' + str(t)] = A_sqrt
 
     # RML
-    def rho(t):
-        return t
-    A = RML(S_train, D_train, rho, reg=RML_REG)
-    A_sqrt = powm(A, 0.5)
-    metrics['RML_t'] = A_sqrt
+    alphas = [0, 0.5, 1]
+    for alpha in alphas:
+        def rho(t):
+            return t
+        A = RML(S_train, D_train, rho, reg=0, alpha=alpha)
+        A_sqrt = powm(A, 0.5)
+        # metrics['RML_alpha_'+str(alpha)+'_rho_t'] = A_sqrt
+        metrics['RML_rho_t_alpha_'+str(alpha)] = A_sqrt
 
-    def rho(t):
-        return np.log(1e-15 + t)
-    A = RML(S_train, D_train, rho, reg=RML_REG)
-    A_sqrt = powm(A, 0.5)
-    metrics['RML_log_t'] = A_sqrt
-
-    def rho(t):
-        return np.log(1 + t)
-    A = RML(S_train, D_train, rho, reg=RML_REG)
-    A_sqrt = powm(A, 0.5)
-    metrics['RML_log_1+t'] = A_sqrt
+    for alpha in alphas:
+        def rho(t):
+            return np.log(1 + t)
+        A = RML(S_train, D_train, rho, reg=0.1, alpha=alpha)
+        A_sqrt = powm(A, 0.5)
+        metrics['RML_rho_log_1+t_alpha_'+str(alpha)] = A_sqrt
 
     for metric in metrics:
         A_sqrt = metrics[metric]
