@@ -77,6 +77,6 @@ def RML(S_train, D_train, rho, reg, alpha=0.5):
     solver = ConjugateGradient(
         maxiter=1e3, minstepsize=1e-10,
         mingradnorm=1e-4, logverbosity=2)
-    problem = Problem(manifold=manifold, cost=cost, egrad=egrad, verbosity=10)
+    problem = Problem(manifold=manifold, cost=cost, egrad=egrad, verbosity=0)
     A, _ = solver.solve(problem, x=init)
     return A

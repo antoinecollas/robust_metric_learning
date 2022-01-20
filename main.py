@@ -65,12 +65,11 @@ for i in tqdm(range(N_RUNS)):
             return t
         A = RML(S_train, D_train, rho, reg=reg_test, alpha=alpha)
         A_sqrt = powm(A, 0.5)
-        # metrics['RML_alpha_'+str(alpha)+'_rho_t'] = A_sqrt
         metrics['RML_rho_t_alpha_'+str(alpha)] = A_sqrt
 
     for alpha in t_consts:
         def rho(t):
-            return np.log(1e-10 + t)
+            return np.log(1 + t)
         A = RML(S_train, D_train, rho, reg=reg_test, alpha=alpha)
         A_sqrt = powm(A, 0.5)
         metrics['RML_rho_log_1+t_alpha_'+str(alpha)] = A_sqrt
