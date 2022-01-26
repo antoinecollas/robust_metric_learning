@@ -10,18 +10,18 @@ from sklearn.pipeline import Pipeline
 from tqdm import tqdm
 
 from data_loader import load_data
-from metric_learning import Identity, GMML_Supervised, RML_Supervised
+from metric_learning import Identity, GMML_Supervised, Mean_SCM, RML_Supervised
 
 
 # constants
 SEED = 0
 rnd.seed(SEED)
-DATASETS = ['wine', 'breast-cancer', 'australian']
-N_RUNS = 10
+DATASETS = ['mnist', 'wine', 'australian', 'iris', 'breast-cancer']
+N_RUNS = 3
 TEST_SIZE = 0.5
 N_CV_GRID_SEARCH = 5
 N_NEIGHBORS = 5
-N_JOBS = 1
+N_JOBS = -1
 clf = KNeighborsClassifier(n_neighbors=N_NEIGHBORS, n_jobs=N_JOBS)
 FAST_TEST = True
 
@@ -123,13 +123,18 @@ for dataset in DATASETS:
                                  pipe, classif_errors_dict)
 
         # GMML
-            reg = 0
         if dataset == 'australian':
             balance_param_grid = [0]
         else:
             balance_param_grid = [0, 0.25, 0.5, 0.75, 1]
+
+        if dataset == 'mnist':
+            reg = 0.1
+        else:
+            reg = 0
+
         metric_name = 'GMML'
-        metric_learner = GMML_Supervised(regularization_param=0,
+        metric_learner = GMML_Supervised(regularization_param=reg,
                                          num_constraints=num_constraints,
                                          random_state=SEED)
         pipe = Pipeline([(metric_name, metric_learner), ('classifier', clf)])
@@ -157,51 +162,68 @@ for dataset in DATASETS:
             clf_predict_evaluate(X_test, y_test, metrics_names, metric_name,
                                  pipe, classif_errors_dict)
 
-        # ##########################
-        # ######### ROBUST #########
-        # ##########################
+        # #############################
+        # ######### HOME MADE #########
+        # #############################
+
+        # Mean SCM
+        metric_name = 'Mean-SCM'
+
+        if dataset == 'mnist':
+            reg = 0.1
+        else:
+            reg = 0
+
+        metric_learner = Mean_SCM(regularization_param=reg)
+        pipe = Pipeline(
+            [(metric_name, metric_learner), ('classifier', clf)]
+        )
+        pipe.fit(X_train, y_train)
+        clf_predict_evaluate(X_test, y_test, metrics_names, metric_name,
+                             pipe, classif_errors_dict)
 
         # RML
-        def RML(rho, metric_name):
-            metric_learner = RML_Supervised(rho, regularization_param=1e-8,
-                                            num_constraints=num_constraints,
-                                            random_state=SEED)
-            pipe = Pipeline(
-                [(metric_name, metric_learner), ('classifier', clf)]
-            )
-            pipe.fit(X_train, y_train)
-            clf_predict_evaluate(X_test, y_test, metrics_names, metric_name,
-                                 pipe, classif_errors_dict)
+        if dataset != 'mnist':
+            def RML(rho, metric_name):
+                metric_learner = RML_Supervised(rho, regularization_param=1e-8,
+                                                num_constraints=num_constraints,
+                                                random_state=SEED)
+                pipe = Pipeline(
+                    [(metric_name, metric_learner), ('classifier', clf)]
+                )
+                pipe.fit(X_train, y_train)
+                clf_predict_evaluate(X_test, y_test, metrics_names, metric_name,
+                                     pipe, classif_errors_dict)
 
-        metric_name_base = 'RML'
+            metric_name_base = 'RML'
 
-        def rho_t(t):
-            return t
+            def rho_t(t):
+                return t
 
-        RML(rho_t, metric_name_base)
+            RML(rho_t, metric_name_base)
 
-        def rho_log(t, c):
-            return np.log(c + t)
+            def rho_log(t, c):
+                return np.log(c + t)
 
-        # C_TO_TEST = [1e-6, 1e-4, 1e-2, 1, 1e2, 1e4]
-        C_TO_TEST = [1]
-        for c in C_TO_TEST:
-            metric_name = metric_name_base + '_log_' + str(c)
-            rho = partial(rho_log, c=c)
-            RML(rho, metric_name)
+            # C_TO_TEST = [1e-6, 1e-4, 1e-2, 1, 1e2, 1e4]
+            C_TO_TEST = [1]
+            for c in C_TO_TEST:
+                metric_name = metric_name_base + '_log_' + str(c)
+                rho = partial(rho_log, c=c)
+                RML(rho, metric_name)
 
-        def rho_Huber(t, c):
-            mask = t <= c
-            res = mask * t
-            res = res + (1 - mask) * c * (np.log(1e-10 + (t / c)) + 1)
-            return res
+            def rho_Huber(t, c):
+                mask = t <= c
+                res = mask * t
+                res = res + (1 - mask) * c * (np.log(1e-10 + (t / c)) + 1)
+                return res
 
-        # C_TO_TEST = [1, 10, 1e2, 1e3, 1e4]
-        C_TO_TEST = [1]
-        for c in C_TO_TEST:
-            metric_name = metric_name_base + '_Huber_' + str(c)
-            rho = partial(rho_Huber, c=c)
-            RML(rho, metric_name)
+            # C_TO_TEST = [1, 10, 1e2, 1e3, 1e4]
+            C_TO_TEST = [1]
+            for c in C_TO_TEST:
+                metric_name = metric_name_base + '_Huber_' + str(c)
+                rho = partial(rho_Huber, c=c)
+                RML(rho, metric_name)
 
     print('Classification errors:')
     t = PrettyTable(['Method', 'Mean error', 'std'])
