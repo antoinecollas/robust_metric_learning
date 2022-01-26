@@ -9,7 +9,7 @@ from sklearn.pipeline import Pipeline
 from tqdm import tqdm
 
 from data_loader import load_data
-from metric_learning import Identity, GMML_Supervised
+from metric_learning import Identity, GMML_Supervised, RML_Supervised
 
 
 # constants
@@ -22,6 +22,7 @@ N_CV_GRID_SEARCH = 5
 N_NEIGHBORS = 5
 N_JOBS = 1
 clf = KNeighborsClassifier(n_neighbors=N_NEIGHBORS, n_jobs=N_JOBS)
+FAST_TEST = True
 
 
 def NUM_CONST(n_classes):
@@ -81,33 +82,35 @@ for i in tqdm(range(N_RUNS)):
     # ### WEAKLY SUPERVISED ####
     # ##########################
 
-    # MMC
-    metric_name = 'MMC'
-    metric_learner = MMC_Supervised(
-        num_constraints=num_constraints, random_state=SEED)
-    pipe = Pipeline([(metric_name, metric_learner), ('classifier', clf)])
-    pipe.fit(X_train, y_train)
-    clf_predict_evaluate(X_test, y_test, metrics_names, metric_name,
-                         pipe, classif_errors_dict)
+    if not FAST_TEST:
+        # MMC
+        metric_name = 'MMC'
+        metric_learner = MMC_Supervised(
+            num_constraints=num_constraints, random_state=SEED)
+        pipe = Pipeline([(metric_name, metric_learner), ('classifier', clf)])
+        pipe.fit(X_train, y_train)
+        clf_predict_evaluate(X_test, y_test, metrics_names, metric_name,
+                             pipe, classif_errors_dict)
 
-    # ITML - identity
-    metric_name = 'ITML - identity'
-    metric_learner = ITML_Supervised(
-        prior='identity', num_constraints=num_constraints, random_state=SEED)
-    pipe = Pipeline([(metric_name, metric_learner), ('classifier', clf)])
-    pipe.fit(X_train, y_train)
-    clf_predict_evaluate(X_test, y_test, metrics_names, metric_name,
-                         pipe, classif_errors_dict)
+        # ITML - identity
+        metric_name = 'ITML - identity'
+        metric_learner = ITML_Supervised(prior='identity',
+                                         num_constraints=num_constraints,
+                                         random_state=SEED)
+        pipe = Pipeline([(metric_name, metric_learner), ('classifier', clf)])
+        pipe.fit(X_train, y_train)
+        clf_predict_evaluate(X_test, y_test, metrics_names, metric_name,
+                             pipe, classif_errors_dict)
 
-    # ITML - SCM
-    metric_name = 'ITML - SCM'
-    metric_learner = ITML_Supervised(
-        prior='covariance', num_constraints=num_constraints,
-        random_state=SEED)
-    pipe = Pipeline([(metric_name, metric_learner), ('classifier', clf)])
-    pipe.fit(X_train, y_train)
-    clf_predict_evaluate(X_test, y_test, metrics_names, metric_name,
-                         pipe, classif_errors_dict)
+        # ITML - SCM
+        metric_name = 'ITML - SCM'
+        metric_learner = ITML_Supervised(
+            prior='covariance', num_constraints=num_constraints,
+            random_state=SEED)
+        pipe = Pipeline([(metric_name, metric_learner), ('classifier', clf)])
+        pipe.fit(X_train, y_train)
+        clf_predict_evaluate(X_test, y_test, metrics_names, metric_name,
+                             pipe, classif_errors_dict)
 
     # GMML
     metric_name = 'GMML'
@@ -128,9 +131,24 @@ for i in tqdm(range(N_RUNS)):
     # ####### SUPERVISED #######
     # ##########################
 
-    # LMNN
-    metric_name = 'LMNN'
-    metric_learner = LMNN(k=N_NEIGHBORS, random_state=SEED)
+    if not FAST_TEST:
+        # LMNN
+        metric_name = 'LMNN'
+        metric_learner = LMNN(k=N_NEIGHBORS, random_state=SEED)
+        pipe = Pipeline([(metric_name, metric_learner), ('classifier', clf)])
+        pipe.fit(X_train, y_train)
+        clf_predict_evaluate(X_test, y_test, metrics_names, metric_name,
+                             pipe, classif_errors_dict)
+
+    # ##########################
+    # ######### ROBUST #########
+    # ##########################
+
+    # RML
+    metric_name = 'RML'
+    metric_learner = RML_Supervised(regularization_param=0,
+                                    num_constraints=num_constraints,
+                                    random_state=SEED)
     pipe = Pipeline([(metric_name, metric_learner), ('classifier', clf)])
     pipe.fit(X_train, y_train)
     clf_predict_evaluate(X_test, y_test, metrics_names, metric_name,

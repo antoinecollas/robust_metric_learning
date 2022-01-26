@@ -127,23 +127,13 @@ class GMML_Supervised(_BaseGMML, TransformerMixin):
 
 # robust metric learning
 
-def create_cost_egrad(S_train, D_train, rho, reg, alpha=0.5):
-    N, p = S_train.shape
-    # S = (1/N) * S_train.T@S_train
-    # S_inv = powm(S, -1)
-    # A_0 = S_inv
-    A_0 = np.eye(p)
-    A_0_inv = la.inv(A_0)
+def _create_cost_egrad(S, D, rho, reg):
+    N, p = S.shape
 
     @pymanopt.function.Callable
     def cost(A):
-        Q = np.real(np.einsum('ij,ji->i', S_train@A, S_train.T))
-        res = (1 - alpha)*(np.mean(rho(Q)) - np.log(np.real(la.det(A))))
-        Q = np.real(np.einsum('ij,ji->i', D_train@la.inv(A), D_train.T))
-        res = res + alpha*(np.mean(rho(Q)) + np.log(np.real(la.det(A))))
-        penalty = np.trace(A@A_0_inv) + np.trace(la.inv(A)@A_0)
-        penalty = np.real(penalty)
-        res = res + reg*penalty
+        Q = np.real(np.einsum('ij,ji->i', S @ A, S.T))
+        res = np.mean(rho(Q)) - np.log(np.real(la.det(A)))
         return res
 
     @pymanopt.function.Callable
@@ -154,16 +144,86 @@ def create_cost_egrad(S_train, D_train, rho, reg, alpha=0.5):
     return cost, auto_egrad
 
 
-def RML(S_train, D_train, rho, reg, alpha=0.5):
-    p = S_train.shape[1]
-    init = np.eye(p)
+class _BaseRML(MahalanobisMixin):
+    """Robust Metric Learning (RML)"""
+    def __init__(self, rho, regularization_param,
+                 preprocessor=None, random_state=None):
+        super(_BaseRML, self).__init__(preprocessor)
+        self.rho = rho
+        self.random_state = random_state
+        self.regularization_param = regularization_param
 
-    cost, egrad = create_cost_egrad(S_train, D_train, rho, reg, alpha)
-    manifold = HermitianPositiveDefinite(p)
-    # solver = SteepestDescent(logverbosity=2)
-    solver = ConjugateGradient(
-        maxiter=1e3, minstepsize=1e-10,
-        mingradnorm=1e-4, logverbosity=2)
-    problem = Problem(manifold=manifold, cost=cost, egrad=egrad, verbosity=0)
-    A, _ = solver.solve(problem, x=init)
-    return A
+    def _fit(self, pairs, y, bounds=None):
+        pairs, y = self._prepare_inputs(pairs, y,
+                                        type_of_inputs='tuples')
+
+        # S
+        tmp = pairs[y == 1]
+        S = tmp[:, 0, :] - tmp[:, 1, :]
+
+        # D
+        tmp = pairs[y == -1]
+        D = tmp[:, 0, :] - tmp[:, 1, :]
+
+        # cost fct
+        rho = self.rho
+        if rho is None:
+            def rho(t):
+                return t
+        reg = self.regularization_param
+        cost, egrad = _create_cost_egrad(S, D, rho, reg)
+
+        N, p = S.shape
+
+        # manifold
+        manifold = HermitianPositiveDefinite(p)
+
+        # solve
+        init = np.eye(p)
+        solver = ConjugateGradient(
+            maxiter=1e3, minstepsize=1e-10,
+            mingradnorm=1e-4, logverbosity=2)
+        problem = Problem(manifold=manifold, cost=cost,
+                          egrad=egrad, verbosity=0)
+        A, _ = solver.solve(problem, x=init)
+
+        # store
+        self.components_ = components_from_metric(np.atleast_2d(A))
+
+        return self
+
+
+class RML_Supervised(_BaseRML, TransformerMixin):
+    def __init__(self, rho=None, regularization_param=0,
+                 num_constraints=None, preprocessor=None, random_state=None):
+        _BaseRML.__init__(self, rho, regularization_param,
+                          preprocessor=preprocessor,
+                          random_state=random_state)
+        self.num_constraints = num_constraints
+
+    def fit(self, X, y):
+        """Create constraints from labels and learn the RML model.
+        Parameters
+        ----------
+        X : (n x d) matrix
+          Input data, where each row corresponds to a single instance.
+        y : (n) array-like
+          Data labels.
+        """
+        X, y = self._prepare_inputs(X, y, ensure_min_samples=2)
+        num_constraints = self.num_constraints
+        if num_constraints is None:
+            num_classes = len(np.unique(y))
+            num_constraints = 40 * num_classes * (num_classes - 1)
+
+        c = Constraints(y)
+        pos_neg = c.positive_negative_pairs(num_constraints,
+                                            random_state=self.random_state)
+        pairs, y = wrap_pairs(X, pos_neg)
+        # check number of constraints
+        N, _, _ = pairs[y == 1].shape
+        assert N == num_constraints
+        N, _, _ = pairs[y == -1].shape
+        assert N == num_constraints
+
+        return _BaseRML._fit(self, pairs, y)
