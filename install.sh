@@ -6,4 +6,5 @@ conda activate robust_metric_learning
 # install libraries
 pip install -r requirements.txt
 pip install git+https://github.com/HIPS/autograd
+pip install git+https://github.com/scikit-learn-contrib/metric-learn
 pip install git+https://github.com/antoinecollas/pymanopt
