@@ -16,6 +16,7 @@ from matrix_operators import powm
 
 # identity
 
+
 class Identity(MahalanobisMixin, TransformerMixin):
     def __init__(self, preprocessor=None):
         super(Identity, self).__init__(preprocessor)
@@ -43,7 +44,32 @@ class SCM(MahalanobisMixin, TransformerMixin):
         return self
 
 
+# Mean SCM
+
+
+class Mean_SCM(MahalanobisMixin, TransformerMixin):
+    def __init__(self, regularization_param=0, preprocessor=None):
+        super(Mean_SCM, self).__init__(preprocessor)
+        self.regularization_param = regularization_param
+
+    def fit(self, X, y):
+        reg = self.regularization_param
+        X = self._prepare_inputs(X, ensure_min_samples=2)
+        N, p = X.shape
+        A = np.zeros_like(X.T @ X)
+        classes = np.unique(y)
+        for k in classes:
+            X_k = X[y == k, :]
+            mean = np.mean(X_k, axis=0, keepdims=True)
+            X_k = X_k - mean
+            A = A + (np.sum(y == k) / N) * X_k.T @ X_k
+        A = A + reg * np.eye(p)
+        self.components_ = powm(A, -0.5)
+        return self
+
+
 # ICML 2016 "Geometric Mean Metric Learning" Zadeh et al.
+
 
 def SPD_mean(A, B, t=0.5):
     assert t >= 0
