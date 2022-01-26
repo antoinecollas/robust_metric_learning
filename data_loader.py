@@ -1,15 +1,23 @@
 import autograd.numpy as np
 import scipy.io as sio
-from sklearn.datasets import load_wine
+from sklearn.datasets import load_iris, load_wine
 
 
 def load_data(str_dataset):
-    if str_dataset == 'wine':
+    if str_dataset == 'iris':
+        data = load_iris()
+        X = data.data
+        y = data.target
+        assert X.shape == (150, 4)  # N*p
+        assert y.shape == (150,)
+        assert len(np.unique(y)) == 3
+    elif str_dataset == 'wine':
         data = load_wine()
         X = data.data
         y = data.target
         assert X.shape == (178, 13)  # N*p
         assert y.shape == (178,)
+        assert len(np.unique(y)) == 3
     elif str_dataset == 'breast-cancer':
         path = 'data/breast-cancer-wisconsin.data'
         data = np.loadtxt(path, delimiter=',')
@@ -23,6 +31,7 @@ def load_data(str_dataset):
         X[:, 5][X[:, 5] == -1] = mean
         assert (X >= 1).all()
         assert (X <= 10).all()
+        assert len(np.unique(y)) == 2
     elif str_dataset == 'australian':
         path = 'data/australian.mat'
         matstruct_contents = sio.loadmat(path)
@@ -31,6 +40,7 @@ def load_data(str_dataset):
         y = y.reshape(-1)
         assert X.shape == (690, 14)  # N*p
         assert y.shape == (690,)
+        assert len(np.unique(y)) == 2
     elif str_dataset == 'mnist':
         path = 'data/2k2k.mat'
         matstruct_contents = sio.loadmat(path)
@@ -39,6 +49,7 @@ def load_data(str_dataset):
         y = y.reshape(-1)
         assert X.shape == (4000, 784)  # N*p
         assert y.shape == (4000,)
+        assert len(np.unique(y)) == 10
     else:
         error = 'Dataset ' + str_dataset + ' not available...'
         raise ValueError(error)
