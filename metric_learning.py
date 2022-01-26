@@ -86,6 +86,7 @@ class _BaseGMML(MahalanobisMixin):
         A = SPD_mean(S_inv, D, t)
 
         self.components_ = components_from_metric(np.atleast_2d(A))
+
         return self
 
 
@@ -128,12 +129,11 @@ class GMML_Supervised(_BaseGMML, TransformerMixin):
 # robust metric learning
 
 def _create_cost_egrad(S, D, rho, reg):
-    N, p = S.shape
-
     @pymanopt.function.Callable
     def cost(A):
         Q = np.real(np.einsum('ij,ji->i', S @ A, S.T))
         res = np.mean(rho(Q)) - np.log(np.real(la.det(A)))
+        res = res + reg * np.real(np.trace(A))
         return res
 
     @pymanopt.function.Callable
