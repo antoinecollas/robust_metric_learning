@@ -24,12 +24,14 @@ N_NEIGHBORS = 5
 N_JOBS = -1
 clf = KNeighborsClassifier(n_neighbors=N_NEIGHBORS, n_jobs=N_JOBS)
 FAST_TEST = True
+VERBOSE = False
 
-DATASETS = ['wine', 'pima', 'vehicle', 'german']
-DATASETS = DATASETS + ['australian', 'iris', 'breast-cancer']
-if not FAST_TEST:
-    DATASETS = ['mnist', 'isolet'] + DATASETS
-
+SMALL_DATASETS = True
+if SMALL_DATASETS:
+    DATASETS = ['wine', 'pima', 'vehicle', 'german']
+    DATASETS = DATASETS + ['australian', 'iris', 'breast-cancer']
+else:
+    DATASETS = ['mnist', 'isolet', 'letters']
 
 
 def clf_predict_evaluate(X_test, y_test,
@@ -79,6 +81,8 @@ for dataset in DATASETS:
 
         # Euclidean
         metric_name = 'Euclidean'
+        if VERBOSE:
+            print('Metric name:', metric_name)
         pipe = Pipeline([(metric_name, Identity()), ('classifier', clf)])
         pipe.fit(X_train, y_train)
         clf_predict_evaluate(
@@ -87,6 +91,8 @@ for dataset in DATASETS:
 
         # SCM
         metric_name = 'SCM'
+        if VERBOSE:
+            print('Metric name:', metric_name)
         pipe = Pipeline([(metric_name, Covariance()), ('classifier', clf)])
         pipe.fit(X_train, y_train)
         clf_predict_evaluate(
@@ -100,6 +106,8 @@ for dataset in DATASETS:
         if not FAST_TEST:
             # MMC
             metric_name = 'MMC'
+            if VERBOSE:
+                print('Metric name:', metric_name)
             metric_learner = MMC_Supervised(
                 num_constraints=num_constraints, random_state=SEED)
             pipe = Pipeline(
@@ -111,6 +119,8 @@ for dataset in DATASETS:
 
             # ITML - identity
             metric_name = 'ITML - identity'
+            if VERBOSE:
+                print('Metric name:', metric_name)
             metric_learner = ITML_Supervised(prior='identity',
                                              num_constraints=num_constraints,
                                              random_state=SEED)
@@ -123,6 +133,8 @@ for dataset in DATASETS:
 
             # ITML - SCM
             metric_name = 'ITML - SCM'
+            if VERBOSE:
+                print('Metric name:', metric_name)
             metric_learner = ITML_Supervised(
                 prior='covariance', num_constraints=num_constraints,
                 random_state=SEED)
@@ -134,17 +146,19 @@ for dataset in DATASETS:
                                  pipe, classif_errors_dict)
 
         # GMML
-        if dataset in ['australian']:
+        if dataset in ['australian', 'isolet']:
             balance_param_grid = [0]
         else:
             balance_param_grid = [0, 0.1, 0.3, 0.5, 0.7, 0.9]
 
-        if dataset in ['german', 'mnist']:
+        if dataset in ['german', 'mnist', 'isolet']:
             reg = 0.1
         else:
             reg = 0
 
         metric_name = 'GMML'
+        if VERBOSE:
+            print('Metric name:', metric_name)
         metric_learner = GMML_Supervised(regularization_param=reg,
                                          num_constraints=num_constraints,
                                          random_state=SEED)
@@ -155,8 +169,9 @@ for dataset in DATASETS:
                                        refit=True, n_jobs=N_JOBS)
         grid_search_clf.fit(X_train, y_train)
         pipe = grid_search_clf.best_estimator_
-        # print('GMML cross val best param:')
-        # print(grid_search_clf.best_params_)
+        if VERBOSE:
+            print('GMML cross val best param:')
+            print(grid_search_clf.best_params_)
         clf_predict_evaluate(X_test, y_test, metrics_names, metric_name,
                              pipe, classif_errors_dict)
 
@@ -167,6 +182,8 @@ for dataset in DATASETS:
         if not FAST_TEST:
             # LMNN
             metric_name = 'LMNN'
+            if VERBOSE:
+                print('Metric name:', metric_name)
             metric_learner = LMNN(k=N_NEIGHBORS, random_state=SEED)
             pipe = Pipeline(
                 [(metric_name, metric_learner), ('classifier', clf)]
@@ -181,6 +198,8 @@ for dataset in DATASETS:
 
         # Mean SCM
         metric_name = 'Mean-SCM'
+        if VERBOSE:
+            print('Metric name:', metric_name)
 
         if dataset == 'mnist':
             reg = 0.1
@@ -211,6 +230,8 @@ for dataset in DATASETS:
                     pipe, classif_errors_dict)
 
             metric_name_base = 'RML'
+            if VERBOSE:
+                print('Metric name:', metric_name_base)
 
             def rho_t(t):
                 return t
@@ -225,6 +246,8 @@ for dataset in DATASETS:
             for c in C_TO_TEST:
                 metric_name = metric_name_base + '_log_' + str(c)
                 rho = partial(rho_log, c=c)
+                if VERBOSE:
+                    print('Metric name:', metric_name)
                 RML(rho, metric_name)
 
             def rho_Huber(t, c):
@@ -238,6 +261,8 @@ for dataset in DATASETS:
             for c in C_TO_TEST:
                 metric_name = metric_name_base + '_Huber_' + str(c)
                 rho = partial(rho_Huber, c=c)
+                if VERBOSE:
+                    print('Metric name:', metric_name)
                 RML(rho, metric_name)
 
     print('Classification errors:')
