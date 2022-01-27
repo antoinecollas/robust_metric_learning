@@ -64,7 +64,8 @@ class Mean_SCM(MahalanobisMixin, TransformerMixin):
             X_k = X_k - mean
             A = A + (np.sum(y == k) / N) * X_k.T @ X_k
         A = A + reg * np.eye(p)
-        self.components_ = powm(A, -0.5)
+        A = powm(A, -1)
+        self.components_ = components_from_metric(np.atleast_2d(A))
         return self
 
 
