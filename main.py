@@ -28,11 +28,8 @@ FAST_TEST = True
 DATASETS = ['wine', 'pima', 'vehicle', 'german']
 DATASETS = DATASETS + ['australian', 'iris', 'breast-cancer']
 if not FAST_TEST:
-    DATASETS = ['mnist'] + DATASETS
+    DATASETS = ['mnist', 'isolet'] + DATASETS
 
-
-def NUM_CONST(n_classes):
-    return 40 * n_classes * (n_classes - 1)
 
 
 def clf_predict_evaluate(X_test, y_test,
@@ -47,6 +44,13 @@ def clf_predict_evaluate(X_test, y_test,
 
 
 for dataset in DATASETS:
+    if dataset in ['mnist', 'isolet']:
+        def NUM_CONST(n_classes):
+            return 200 * n_classes * (n_classes - 1)
+    else:
+        def NUM_CONST(n_classes):
+            return 40 * n_classes * (n_classes - 1)
+
     print('##############################')
     print('DATASET:', dataset)
     print('##############################')

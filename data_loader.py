@@ -77,6 +77,15 @@ def load_data(str_dataset):
         assert X.shape == (4000, 784)  # N*p
         assert y.shape == (4000,)
         assert len(np.unique(y)) == 10
+    elif str_dataset == 'isolet':
+        path = 'data/isolet.csv'
+        data = np.genfromtxt(path, delimiter=' ')
+        assert data.shape == (7797, 618)
+        X = data[:, :617]
+        y = data[:, 617]
+        assert X.shape == (7797, 617)  # N*p
+        assert y.shape == (7797,)
+        assert len(np.unique(y)) == 26
     else:
         error = 'Dataset ' + str_dataset + ' not available...'
         raise ValueError(error)
