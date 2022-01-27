@@ -16,7 +16,7 @@ from metric_learning import Identity, GMML_Supervised, Mean_SCM, RML_Supervised
 # constants
 SEED = 0
 rnd.seed(SEED)
-DATASETS = ['mnist', 'wine', 'australian', 'iris', 'breast-cancer']
+
 N_RUNS = 3
 TEST_SIZE = 0.5
 N_CV_GRID_SEARCH = 5
@@ -24,6 +24,11 @@ N_NEIGHBORS = 5
 N_JOBS = -1
 clf = KNeighborsClassifier(n_neighbors=N_NEIGHBORS, n_jobs=N_JOBS)
 FAST_TEST = True
+
+if FAST_TEST:
+    DATASETS = ['wine', 'australian', 'iris', 'breast-cancer']
+else:
+    DATASETS = ['mnist', 'wine', 'australian', 'iris', 'breast-cancer']
 
 
 def NUM_CONST(n_classes):
