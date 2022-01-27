@@ -86,6 +86,15 @@ def load_data(str_dataset):
         assert X.shape == (7797, 617)  # N*p
         assert y.shape == (7797,)
         assert len(np.unique(y)) == 26
+    elif str_dataset == 'letters':
+        path = 'data/letters.csv'
+        data = np.genfromtxt(path, delimiter=' ')
+        assert data.shape == (20000, 17)
+        X = data[:, :16]
+        y = data[:, 16]
+        assert X.shape == (20000, 16)  # N*p
+        assert y.shape == (20000,)
+        assert len(np.unique(y)) == 26
     else:
         error = 'Dataset ' + str_dataset + ' not available...'
         raise ValueError(error)
