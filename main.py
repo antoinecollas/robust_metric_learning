@@ -25,10 +25,9 @@ N_JOBS = -1
 clf = KNeighborsClassifier(n_neighbors=N_NEIGHBORS, n_jobs=N_JOBS)
 FAST_TEST = True
 
-if FAST_TEST:
-    DATASETS = ['wine', 'australian', 'iris', 'breast-cancer']
-else:
-    DATASETS = ['mnist', 'wine', 'australian', 'iris', 'breast-cancer']
+DATASETS = ['wine', 'vehicle', 'australian', 'iris', 'breast-cancer']
+if not FAST_TEST:
+    DATASETS = ['mnist'] + DATASETS
 
 
 def NUM_CONST(n_classes):
@@ -133,7 +132,7 @@ for dataset in DATASETS:
         if dataset == 'australian':
             balance_param_grid = [0]
         else:
-            balance_param_grid = [0, 0.25, 0.5, 0.75, 1]
+            balance_param_grid = [0, 0.1, 0.3, 0.5, 0.7, 0.9]
 
         if dataset == 'mnist':
             reg = 0.1
@@ -151,6 +150,8 @@ for dataset in DATASETS:
                                        refit=True, n_jobs=N_JOBS)
         grid_search_clf.fit(X_train, y_train)
         pipe = grid_search_clf.best_estimator_
+        # print('GMML cross val best param:')
+        # print(grid_search_clf.best_params_)
         clf_predict_evaluate(X_test, y_test, metrics_names, metric_name,
                              pipe, classif_errors_dict)
 
