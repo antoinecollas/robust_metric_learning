@@ -17,7 +17,7 @@ from metric_learning import Identity, GMML_Supervised, Mean_SCM, RML_Supervised
 SEED = 0
 rnd.seed(SEED)
 
-N_RUNS = 3
+N_RUNS = 5
 TEST_SIZE = 0.5
 N_CV_GRID_SEARCH = 5
 N_NEIGHBORS = 5
@@ -25,7 +25,8 @@ N_JOBS = -1
 clf = KNeighborsClassifier(n_neighbors=N_NEIGHBORS, n_jobs=N_JOBS)
 FAST_TEST = True
 
-DATASETS = ['wine', 'vehicle', 'australian', 'iris', 'breast-cancer']
+DATASETS = ['wine', 'pima', 'vehicle', 'german']
+DATASETS = DATASETS + ['australian', 'iris', 'breast-cancer']
 if not FAST_TEST:
     DATASETS = ['mnist'] + DATASETS
 
@@ -129,12 +130,12 @@ for dataset in DATASETS:
                                  pipe, classif_errors_dict)
 
         # GMML
-        if dataset == 'australian':
+        if dataset in ['australian']:
             balance_param_grid = [0]
         else:
             balance_param_grid = [0, 0.1, 0.3, 0.5, 0.7, 0.9]
 
-        if dataset == 'mnist':
+        if dataset in ['german', 'mnist']:
             reg = 0.1
         else:
             reg = 0

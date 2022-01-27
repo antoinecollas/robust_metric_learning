@@ -11,15 +11,33 @@ def load_data(str_dataset):
         assert X.shape == (178, 13)  # N*p
         assert y.shape == (178,)
         assert len(np.unique(y)) == 3
+    elif str_dataset == 'pima':
+        path = 'data/pima.csv'
+        data = np.genfromtxt(path, delimiter=' ')
+        assert data.shape == (768, 9)
+        X = data[:, :8]
+        y = data[:, 8]
+        assert X.shape == (768, 8)  # N*p
+        assert y.shape == (768,)
+        assert len(np.unique(y)) == 2
     elif str_dataset == 'vehicle':
         path = 'data/vehicle.csv'
-        data = np.genfromtxt (path, delimiter=' ')
+        data = np.genfromtxt(path, delimiter=' ')
         assert data.shape == (846, 19)
         X = data[:, :18]
         y = data[:, 18]
         assert X.shape == (846, 18)  # N*p
         assert y.shape == (846,)
         assert len(np.unique(y)) == 4
+    elif str_dataset == 'german':
+        path = 'data/german.csv'
+        data = np.genfromtxt(path, delimiter=',')
+        assert data.shape == (1000, 25)
+        X = data[:, :24]
+        y = data[:, 24]
+        assert X.shape == (1000, 24)  # N*p
+        assert y.shape == (1000,)
+        assert len(np.unique(y)) == 2
     elif str_dataset == 'australian':
         path = 'data/australian.mat'
         matstruct_contents = sio.loadmat(path)
