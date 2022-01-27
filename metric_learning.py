@@ -44,31 +44,6 @@ class SCM(MahalanobisMixin, TransformerMixin):
         return self
 
 
-# Mean SCM
-
-
-class Mean_SCM(MahalanobisMixin, TransformerMixin):
-    def __init__(self, regularization_param=0, preprocessor=None):
-        super(Mean_SCM, self).__init__(preprocessor)
-        self.regularization_param = regularization_param
-
-    def fit(self, X, y):
-        reg = self.regularization_param
-        X = self._prepare_inputs(X, ensure_min_samples=2)
-        N, p = X.shape
-        A = np.zeros_like(X.T @ X)
-        classes = np.unique(y)
-        for k in classes:
-            X_k = X[y == k, :]
-            mean = np.mean(X_k, axis=0, keepdims=True)
-            X_k = X_k - mean
-            A = A + (np.sum(y == k) / N) * X_k.T @ X_k
-        A = A + reg * np.eye(p)
-        A = powm(A, -1)
-        self.components_ = components_from_metric(np.atleast_2d(A))
-        return self
-
-
 # ICML 2016 "Geometric Mean Metric Learning" Zadeh et al.
 
 
@@ -153,7 +128,33 @@ class GMML_Supervised(_BaseGMML, TransformerMixin):
         return _BaseGMML._fit(self, pairs, y)
 
 
+# Mean SCM
+
+
+class Mean_SCM(MahalanobisMixin, TransformerMixin):
+    def __init__(self, regularization_param=0, preprocessor=None):
+        super(Mean_SCM, self).__init__(preprocessor)
+        self.regularization_param = regularization_param
+
+    def fit(self, X, y):
+        reg = self.regularization_param
+        X = self._prepare_inputs(X, ensure_min_samples=2)
+        N, p = X.shape
+        A = np.zeros_like(X.T @ X)
+        classes = np.unique(y)
+        for k in classes:
+            X_k = X[y == k, :]
+            mean = np.mean(X_k, axis=0, keepdims=True)
+            X_k = X_k - mean
+            A = A + (np.sum(y == k) / N) * X_k.T @ X_k
+        A = A + reg * np.eye(p)
+        A = powm(A, -1)
+        self.components_ = components_from_metric(np.atleast_2d(A))
+        return self
+
+
 # robust metric learning
+
 
 def _create_cost_egrad(S, D, rho, reg):
     @pymanopt.function.Callable
