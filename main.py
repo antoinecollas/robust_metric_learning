@@ -77,15 +77,17 @@ for dataset in DATASETS:
         metric_name = 'Euclidean'
         pipe = Pipeline([(metric_name, Identity()), ('classifier', clf)])
         pipe.fit(X_train, y_train)
-        clf_predict_evaluate(X_test, y_test, metrics_names, metric_name,
-                             pipe, classif_errors_dict)
+        clf_predict_evaluate(
+            X_test, y_test, metrics_names, metric_name,
+            pipe, classif_errors_dict)
 
         # SCM
         metric_name = 'SCM'
         pipe = Pipeline([(metric_name, Covariance()), ('classifier', clf)])
         pipe.fit(X_train, y_train)
-        clf_predict_evaluate(X_test, y_test, metrics_names, metric_name,
-                             pipe, classif_errors_dict)
+        clf_predict_evaluate(
+            X_test, y_test, metrics_names, metric_name,
+            pipe, classif_errors_dict)
 
         # ##########################
         # ### WEAKLY SUPERVISED ####
@@ -190,15 +192,17 @@ for dataset in DATASETS:
         # RML
         if dataset != 'mnist':
             def RML(rho, metric_name):
-                metric_learner = RML_Supervised(rho, regularization_param=1e-8,
-                                                num_constraints=num_constraints,
-                                                random_state=SEED)
+                metric_learner = RML_Supervised(
+                    rho, regularization_param=1e-8,
+                    num_constraints=num_constraints,
+                    random_state=SEED)
                 pipe = Pipeline(
                     [(metric_name, metric_learner), ('classifier', clf)]
                 )
                 pipe.fit(X_train, y_train)
-                clf_predict_evaluate(X_test, y_test, metrics_names, metric_name,
-                                     pipe, classif_errors_dict)
+                clf_predict_evaluate(
+                    X_test, y_test, metrics_names, metric_name,
+                    pipe, classif_errors_dict)
 
             metric_name_base = 'RML'
 
