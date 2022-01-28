@@ -24,6 +24,7 @@ N_NEIGHBORS = 5
 N_JOBS = -1
 clf = KNeighborsClassifier(n_neighbors=N_NEIGHBORS, n_jobs=N_JOBS)
 FAST_TEST = True
+ROBUST_METHODS = False
 VERBOSE = False
 
 SMALL_DATASETS = True
@@ -215,7 +216,7 @@ for dataset in DATASETS:
                              pipe, classif_errors_dict)
 
         # RML
-        if dataset != 'mnist':
+        if ROBUST_METHODS and (dataset != 'mnist'):
             def RML(rho, metric_name):
                 metric_learner = RML_Supervised(
                     rho, regularization_param=1e-8,
