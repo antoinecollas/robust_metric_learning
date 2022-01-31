@@ -132,26 +132,52 @@ class GMML_Supervised(_BaseGMML, TransformerMixin):
 
 
 class MeanSCM(MahalanobisMixin, TransformerMixin):
-    def __init__(self, regularization_param=0, preprocessor=None):
+    def __init__(self, regularization_param=0,
+                 num_constraints=None, preprocessor=None,
+                 random_state=None):
         super(MeanSCM, self).__init__(preprocessor)
         self.regularization_param = regularization_param
+        self.num_constraints = num_constraints
+        self.random_state = random_state
 
     def fit(self, X, y):
+        random_state = self.random_state
         reg = self.regularization_param
-        X = self._prepare_inputs(X, ensure_min_samples=2)
+        num_constraints = self.num_constraints
+
+        rnd.seed(random_state)
+        X, y = self._prepare_inputs(X, y, ensure_min_samples=2)
+
+        if num_constraints is None:
+            num_classes = len(np.unique(y))
+            num_constraints = 40 * num_classes * (num_classes - 1)
+
         N, p = X.shape
         A = np.zeros_like(X.T @ X)
         classes = np.unique(y)
+
         for k in classes:
+            mask = (y == k)
+
+            # compute proportion of k-th class
+            pi_k = np.sum(mask) / N
+
+            # create positive pairs for the k-th class
+            X_k = X[mask, :]
+            a = rnd.randint(X_k.shape[0], size=num_constraints)
+            b = rnd.randint(X_k.shape[0], size=num_constraints)
+
+            # compute SCM on the similarity vectors
+            tmp = X_k[a] - X_k[b]
+            S_k = (1 / tmp.shape[0]) * (tmp.T @ tmp)
             X_k = X[y == k, :]
-            mean = np.mean(X_k, axis=0, keepdims=True)
-            X_k = X_k - mean
-            sigma_k = (1 / X_k.shape[0]) * X_k.T @ X_k
-            pi_k = np.sum(y == k) / N
-            A = A + pi_k * sigma_k
+
+            A = A + pi_k * S_k
+
         A = A + reg * np.eye(p)
         A = powm(A, -1)
         self.components_ = components_from_metric(np.atleast_2d(A))
+
         return self
 
 
