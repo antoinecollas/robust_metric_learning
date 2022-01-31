@@ -228,7 +228,7 @@ for dataset in DATASETS:
                              pipe, classif_errors_dict)
 
         # SPDMeanSCM
-        if dataset in ['german', 'breast-cancer']:
+        if dataset in ['german', 'australian', 'breast-cancer']:
             reg = 0.1
         else:
             reg = 0
