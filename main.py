@@ -17,7 +17,7 @@ from metric_learning import Identity, GMML_Supervised, MeanSCM, SPDMeanSCM
 SEED = 0
 rnd.seed(SEED)
 
-N_RUNS = 5
+N_RUNS = 40
 TEST_SIZE = 0.5
 N_CV_GRID_SEARCH = 5
 N_NEIGHBORS = 5
@@ -246,9 +246,9 @@ for dataset in DATASETS:
             X_test, y_test, metrics_names, metric_name,
             pipe, classif_errors_dict)
 
-        # # RML
+        # #RML
         # if ROBUST_METHODS:
-        #     if dataset != 'mnist':
+        #     if dataset not in ['mnist']:
         #         def RML_evaluate(rho, metric_name):
         #             metric_learner = RML(
         #                 rho, regularization_param=1e-8,
@@ -270,32 +270,6 @@ for dataset in DATASETS:
         #             return t
 
         #         RML_evaluate(rho_t, metric_name_base)
-
-        #         def rho_log(t, c):
-        #             return np.log(c + t)
-
-        #         C_TO_TEST = [1]
-        #         for c in C_TO_TEST:
-        #             metric_name = metric_name_base + '_log_' + str(c)
-        #             rho = partial(rho_log, c=c)
-        #             if VERBOSE:
-        #                 print('Metric name:', metric_name)
-        #             RML_evaluate(rho, metric_name)
-
-        #         def rho_Huber(t, c):
-        #             mask = t <= c
-        #             res = mask * t
-        #             res = res + (1 - mask) * c * (np.log(1e-10 + (t / c)) + 1)
-        #             return res
-
-        #         # C_TO_TEST = [1, 10, 1e2, 1e3, 1e4]
-        #         C_TO_TEST = [1]
-        #         for c in C_TO_TEST:
-        #             metric_name = metric_name_base + '_Huber_' + str(c)
-        #             rho = partial(rho_Huber, c=c)
-        #             if VERBOSE:
-        #                 print('Metric name:', metric_name)
-        #             RML_evaluate(rho, metric_name)
 
     print('Classification errors:')
     t = PrettyTable(['Method', 'Mean error', 'std'])

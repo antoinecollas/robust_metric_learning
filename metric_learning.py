@@ -205,7 +205,8 @@ def _create_cost_egrad(pi, S):
 
 class SPDMeanSCM(MahalanobisMixin, TransformerMixin):
     def __init__(self, regularization_param=0,
-                 num_constraints=None, preprocessor=None, random_state=None):
+                 num_constraints=None, preprocessor=None,
+                 random_state=None):
         super(SPDMeanSCM, self).__init__(preprocessor)
         self.regularization_param = regularization_param
         self.num_constraints = num_constraints
@@ -221,10 +222,12 @@ class SPDMeanSCM(MahalanobisMixin, TransformerMixin):
           Data labels.
         """
         random_state = self.random_state
+        reg = self.regularization_param
+        num_constraints = self.num_constraints
+
         rnd.seed(random_state)
         X, y = self._prepare_inputs(X, y, ensure_min_samples=2)
 
-        num_constraints = self.num_constraints
         if num_constraints is None:
             num_classes = len(np.unique(y))
             num_constraints = 40 * num_classes * (num_classes - 1)
@@ -234,7 +237,6 @@ class SPDMeanSCM(MahalanobisMixin, TransformerMixin):
         N, p = X.shape
         pi = np.zeros(K)
         S = np.zeros((K, p, p))
-        reg = self.regularization_param
 
         for k in classes:
             mask = (y == k)
