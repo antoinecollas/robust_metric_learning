@@ -228,19 +228,19 @@ for dataset in DATASETS:
                              pipe, classif_errors_dict)
 
         # SPDMeanSCM
-        # if dataset not in ['pima']:
-        metric_name = 'SPDMeanSCM'
-        metric_learner = SPDMeanSCM(
-            regularization_param=0,
-            num_constraints=num_constraints,
-            random_state=SEED)
-        pipe = Pipeline(
-            [(metric_name, metric_learner), ('classifier', clf)]
-        )
-        pipe.fit(X_train, y_train)
-        clf_predict_evaluate(
-            X_test, y_test, metrics_names, metric_name,
-            pipe, classif_errors_dict)
+        if dataset not in ['german']:
+            metric_name = 'SPDMeanSCM'
+            metric_learner = SPDMeanSCM(
+                regularization_param=0,
+                num_constraints=num_constraints,
+                random_state=SEED)
+            pipe = Pipeline(
+                [(metric_name, metric_learner), ('classifier', clf)]
+            )
+            pipe.fit(X_train, y_train)
+            clf_predict_evaluate(
+                X_test, y_test, metrics_names, metric_name,
+                pipe, classif_errors_dict)
 
         # # RML
         # if ROBUST_METHODS:
