@@ -98,4 +98,10 @@ def load_data(str_dataset):
     else:
         error = 'Dataset ' + str_dataset + ' not available...'
         raise ValueError(error)
+
+    # remap classes to 0, ..., K-1
+    classes = np.unique(y)
+    for k, c in enumerate(classes):
+        y[y == c] = k
+    assert (np.unique(y) == np.arange(len(classes))).all()
     return X, y
