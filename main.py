@@ -147,24 +147,36 @@ for dataset in DATASETS:
                                  pipe, classif_errors_dict)
 
         # GMML
-        if dataset in ['australian', 'isolet']:
-            balance_param_grid = [0]
-        else:
-            balance_param_grid = [0, 0.1, 0.3, 0.5, 0.7, 0.9]
-
         if dataset in ['german', 'mnist', 'isolet']:
             reg = 0.1
         else:
             reg = 0
 
-        metric_name = 'GMML'
+        metric_name = 'GMML - t=0'
+        if VERBOSE:
+            print('Metric name:', metric_name)
+        metric_learner = GMML_Supervised(regularization_param=reg,
+                                         balance_param=0,
+                                         num_constraints=num_constraints,
+                                         random_state=SEED)
+        pipe = Pipeline([(metric_name, metric_learner), ('classifier', clf)])
+        pipe.fit(X_train, y_train)
+        clf_predict_evaluate(X_test, y_test, metrics_names, metric_name,
+                             pipe, classif_errors_dict)
+
+        if dataset in ['australian', 'isolet']:
+            balance_param_grid = [0]
+        else:
+            balance_param_grid = [0, 0.1, 0.3, 0.5, 0.7, 0.9]
+
+        metric_name = 'GMML - CV'
         if VERBOSE:
             print('Metric name:', metric_name)
         metric_learner = GMML_Supervised(regularization_param=reg,
                                          num_constraints=num_constraints,
                                          random_state=SEED)
         pipe = Pipeline([(metric_name, metric_learner), ('classifier', clf)])
-        param_grid = [{'GMML__balance_param': balance_param_grid}]
+        param_grid = [{metric_name+'__balance_param': balance_param_grid}]
         grid_search_clf = GridSearchCV(pipe, param_grid, cv=N_CV_GRID_SEARCH,
                                        scoring=make_scorer(accuracy_score),
                                        refit=True, n_jobs=N_JOBS)
@@ -198,7 +210,7 @@ for dataset in DATASETS:
         # #############################
 
         # Mean SCM
-        metric_name = 'Mean-SCM'
+        metric_name = 'Mean - SCM'
         if VERBOSE:
             print('Metric name:', metric_name)
 
@@ -216,55 +228,56 @@ for dataset in DATASETS:
                              pipe, classif_errors_dict)
 
         # RML
-        if ROBUST_METHODS and (dataset != 'mnist'):
-            def RML(rho, metric_name):
-                metric_learner = RML_Supervised(
-                    rho, regularization_param=1e-8,
-                    num_constraints=num_constraints,
-                    random_state=SEED)
-                pipe = Pipeline(
-                    [(metric_name, metric_learner), ('classifier', clf)]
-                )
-                pipe.fit(X_train, y_train)
-                clf_predict_evaluate(
-                    X_test, y_test, metrics_names, metric_name,
-                    pipe, classif_errors_dict)
+        if ROBUST_METHODS:
+            if dataset != 'mnist':
+                def RML(rho, metric_name):
+                    metric_learner = RML_Supervised(
+                        rho, regularization_param=1e-8,
+                        num_constraints=num_constraints,
+                        random_state=SEED)
+                    pipe = Pipeline(
+                        [(metric_name, metric_learner), ('classifier', clf)]
+                    )
+                    pipe.fit(X_train, y_train)
+                    clf_predict_evaluate(
+                        X_test, y_test, metrics_names, metric_name,
+                        pipe, classif_errors_dict)
 
-            metric_name_base = 'RML'
-            if VERBOSE:
-                print('Metric name:', metric_name_base)
-
-            def rho_t(t):
-                return t
-
-            RML(rho_t, metric_name_base)
-
-            def rho_log(t, c):
-                return np.log(c + t)
-
-            # C_TO_TEST = [1e-6, 1e-4, 1e-2, 1, 1e2, 1e4]
-            C_TO_TEST = [1]
-            for c in C_TO_TEST:
-                metric_name = metric_name_base + '_log_' + str(c)
-                rho = partial(rho_log, c=c)
+                metric_name_base = 'RML'
                 if VERBOSE:
-                    print('Metric name:', metric_name)
-                RML(rho, metric_name)
+                    print('Metric name:', metric_name_base)
 
-            def rho_Huber(t, c):
-                mask = t <= c
-                res = mask * t
-                res = res + (1 - mask) * c * (np.log(1e-10 + (t / c)) + 1)
-                return res
+                def rho_t(t):
+                    return t
 
-            # C_TO_TEST = [1, 10, 1e2, 1e3, 1e4]
-            C_TO_TEST = [1]
-            for c in C_TO_TEST:
-                metric_name = metric_name_base + '_Huber_' + str(c)
-                rho = partial(rho_Huber, c=c)
-                if VERBOSE:
-                    print('Metric name:', metric_name)
-                RML(rho, metric_name)
+                RML(rho_t, metric_name_base)
+
+                def rho_log(t, c):
+                    return np.log(c + t)
+
+                # C_TO_TEST = [1e-6, 1e-4, 1e-2, 1, 1e2, 1e4]
+                C_TO_TEST = [1]
+                for c in C_TO_TEST:
+                    metric_name = metric_name_base + '_log_' + str(c)
+                    rho = partial(rho_log, c=c)
+                    if VERBOSE:
+                        print('Metric name:', metric_name)
+                    RML(rho, metric_name)
+
+                def rho_Huber(t, c):
+                    mask = t <= c
+                    res = mask * t
+                    res = res + (1 - mask) * c * (np.log(1e-10 + (t / c)) + 1)
+                    return res
+
+                # C_TO_TEST = [1, 10, 1e2, 1e3, 1e4]
+                C_TO_TEST = [1]
+                for c in C_TO_TEST:
+                    metric_name = metric_name_base + '_Huber_' + str(c)
+                    rho = partial(rho_Huber, c=c)
+                    if VERBOSE:
+                        print('Metric name:', metric_name)
+                    RML(rho, metric_name)
 
     print('Classification errors:')
     t = PrettyTable(['Method', 'Mean error', 'std'])
