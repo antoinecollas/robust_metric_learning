@@ -1,17 +1,17 @@
 import autograd
 import autograd.numpy as np
 import autograd.numpy.linalg as la
+import autograd.numpy.random as rnd
 from metric_learn.base_metric import MahalanobisMixin
 from metric_learn.constraints import Constraints, wrap_pairs
 from metric_learn._util import components_from_metric
 import pymanopt
 from pymanopt import Problem
 from pymanopt.manifolds import HermitianPositiveDefinite
-# from pymanopt.solvers import ConjugateGradient, SteepestDescent
 from pymanopt.solvers import ConjugateGradient
 from sklearn.base import TransformerMixin
 
-from matrix_operators import powm
+from matrix_operators import logm, powm
 
 
 # identity
@@ -131,9 +131,9 @@ class GMML_Supervised(_BaseGMML, TransformerMixin):
 # Mean SCM
 
 
-class Mean_SCM(MahalanobisMixin, TransformerMixin):
+class MeanSCM(MahalanobisMixin, TransformerMixin):
     def __init__(self, regularization_param=0, preprocessor=None):
-        super(Mean_SCM, self).__init__(preprocessor)
+        super(MeanSCM, self).__init__(preprocessor)
         self.regularization_param = regularization_param
 
     def fit(self, X, y):
@@ -146,22 +146,27 @@ class Mean_SCM(MahalanobisMixin, TransformerMixin):
             X_k = X[y == k, :]
             mean = np.mean(X_k, axis=0, keepdims=True)
             X_k = X_k - mean
-            A = A + (np.sum(y == k) / N) * X_k.T @ X_k
+            sigma_k = (1 / X_k.shape[0]) * X_k.T @ X_k
+            pi_k = np.sum(y == k) / N
+            A = A + pi_k * sigma_k
         A = A + reg * np.eye(p)
         A = powm(A, -1)
         self.components_ = components_from_metric(np.atleast_2d(A))
         return self
 
 
-# robust metric learning
+# SPD mean SCM
 
 
-def _create_cost_egrad(S, D, rho, reg):
+def _create_cost_egrad(pi, S):
+    S_invsqrt = powm(S, -0.5)
+
     @pymanopt.function.Callable
     def cost(A):
-        Q = np.real(np.einsum('ij,ji->i', S @ A, S.T))
-        res = np.mean(rho(Q)) - np.log(np.real(la.det(A)))
-        res = res + reg * np.real(np.trace(A))
+        tmp = logm(S_invsqrt @ A @ S_invsqrt)
+        tmp = la.norm(tmp, axis=(1, 2))**2
+        res = pi * tmp
+        res = np.sum(res)
         return res
 
     @pymanopt.function.Callable
@@ -172,36 +177,57 @@ def _create_cost_egrad(S, D, rho, reg):
     return cost, auto_egrad
 
 
-class _BaseRML(MahalanobisMixin):
-    """Robust Metric Learning (RML)"""
-    def __init__(self, rho, regularization_param,
-                 preprocessor=None, random_state=None):
-        super(_BaseRML, self).__init__(preprocessor)
-        self.rho = rho
-        self.random_state = random_state
+class SPDMeanSCM(MahalanobisMixin, TransformerMixin):
+    def __init__(self, regularization_param=0,
+                 num_constraints=None, preprocessor=None, random_state=None):
+        super(SPDMeanSCM, self).__init__(preprocessor)
         self.regularization_param = regularization_param
+        self.num_constraints = num_constraints
+        self.random_state = random_state
 
-    def _fit(self, pairs, y, bounds=None):
-        pairs, y = self._prepare_inputs(pairs, y,
-                                        type_of_inputs='tuples')
+    def fit(self, X, y):
+        """Create constraints from labels and learn the RML model.
+        Parameters
+        ----------
+        X : (n x d) matrix
+          Input data, where each row corresponds to a single instance.
+        y : (n) array-like
+          Data labels.
+        """
+        random_state = self.random_state
+        rnd.seed(random_state)
+        X, y = self._prepare_inputs(X, y, ensure_min_samples=2)
 
-        # S
-        tmp = pairs[y == 1]
-        S = tmp[:, 0, :] - tmp[:, 1, :]
+        num_constraints = self.num_constraints
+        if num_constraints is None:
+            num_classes = len(np.unique(y))
+            num_constraints = 40 * num_classes * (num_classes - 1)
 
-        # D
-        tmp = pairs[y == -1]
-        D = tmp[:, 0, :] - tmp[:, 1, :]
-
-        # cost fct
-        rho = self.rho
-        if rho is None:
-            def rho(t):
-                return t
+        classes = np.unique(y).astype(int)
+        K = len(classes)
+        N, p = X.shape
+        pi = np.zeros(K)
+        S = np.zeros((K, p, p))
         reg = self.regularization_param
-        cost, egrad = _create_cost_egrad(S, D, rho, reg)
 
-        N, p = S.shape
+        for k in classes:
+            mask = (y == k)
+
+            # compute proportion of k-th class
+            pi[k] = np.sum(mask) / N
+
+            # create positive pairs for the k-th class
+            X_k = X[mask, :]
+            a = rnd.randint(X_k.shape[0], size=num_constraints)
+            b = rnd.randint(X_k.shape[0], size=num_constraints)
+
+            # compute SCM on the similarity vectors
+            tmp = X_k[a] - X_k[b]
+            S_k = (1 / tmp.shape[0]) * (tmp.T @ tmp)
+            S[k, :, :] = S_k + reg * np.eye(p)
+
+        # cost
+        cost, egrad = _create_cost_egrad(pi, S)
 
         # manifold
         manifold = HermitianPositiveDefinite(p)
@@ -214,44 +240,9 @@ class _BaseRML(MahalanobisMixin):
         problem = Problem(manifold=manifold, cost=cost,
                           egrad=egrad, verbosity=0)
         A, _ = solver.solve(problem, x=init)
+        A = powm(A, -1)
 
         # store
         self.components_ = components_from_metric(np.atleast_2d(A))
 
         return self
-
-
-class RML_Supervised(_BaseRML, TransformerMixin):
-    def __init__(self, rho=None, regularization_param=0,
-                 num_constraints=None, preprocessor=None, random_state=None):
-        _BaseRML.__init__(self, rho, regularization_param,
-                          preprocessor=preprocessor,
-                          random_state=random_state)
-        self.num_constraints = num_constraints
-
-    def fit(self, X, y):
-        """Create constraints from labels and learn the RML model.
-        Parameters
-        ----------
-        X : (n x d) matrix
-          Input data, where each row corresponds to a single instance.
-        y : (n) array-like
-          Data labels.
-        """
-        X, y = self._prepare_inputs(X, y, ensure_min_samples=2)
-        num_constraints = self.num_constraints
-        if num_constraints is None:
-            num_classes = len(np.unique(y))
-            num_constraints = 40 * num_classes * (num_classes - 1)
-
-        c = Constraints(y)
-        pos_neg = c.positive_negative_pairs(num_constraints,
-                                            random_state=self.random_state)
-        pairs, y = wrap_pairs(X, pos_neg)
-        # check number of constraints
-        N, _, _ = pairs[y == 1].shape
-        assert N == num_constraints
-        N, _, _ = pairs[y == -1].shape
-        assert N == num_constraints
-
-        return _BaseRML._fit(self, pairs, y)
