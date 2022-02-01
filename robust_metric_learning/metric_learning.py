@@ -1,6 +1,4 @@
 import jax
-from jax.config import config
-config.update('jax_enable_x64', True)
 import jax.numpy as jnp
 import jax.numpy.linalg as jla
 import numpy as np
@@ -15,6 +13,8 @@ from pymanopt.solvers import ConjugateGradient
 from sklearn.base import TransformerMixin
 
 from .matrix_operators import logm, powm
+
+jax.config.update('jax_enable_x64', True)
 
 
 # identity

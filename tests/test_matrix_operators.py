@@ -1,6 +1,4 @@
 import jax
-from jax.config import config
-config.update('jax_enable_x64', True)
 import jax.numpy as jnp
 import jax.numpy.linalg as jla
 import numpy as np
@@ -10,6 +8,8 @@ import scipy.linalg as la
 
 from robust_metric_learning.matrix_operators import (expm, logm, invm,
                                                      invsqrtm, powm)
+
+jax.config.update('jax_enable_x64', True)
 
 
 def test_expm():

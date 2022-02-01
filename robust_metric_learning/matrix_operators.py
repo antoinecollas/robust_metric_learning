@@ -1,9 +1,10 @@
 # Inspired from: https://github.com/alexandrebarachant/pyRiemann/
 # blob/master/pyriemann/utils/base.py
-from jax.config import config
-config.update('jax_enable_x64', True)
+import jax
 import jax.numpy as jnp
 import jax.numpy.linalg as jla
+
+jax.config.update('jax_enable_x64', True)
 
 
 def _matrix_operator(Ci, operator):
