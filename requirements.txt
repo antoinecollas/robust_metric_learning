@@ -1,9 +1,7 @@
 flake8
-matplotlib
+nose2
 numpy
 prettytable
 scikit-learn
 scipy
-seaborn
-tikzplotlib
 tqdm
