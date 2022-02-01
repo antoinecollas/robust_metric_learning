@@ -1,6 +1,5 @@
 import autograd.numpy as np
 import autograd.numpy.random as rnd
-from functools import partial
 from metric_learn import Covariance, ITML_Supervised, LMNN, MMC_Supervised
 from prettytable import PrettyTable
 from sklearn.metrics import accuracy_score, make_scorer
@@ -10,7 +9,12 @@ from sklearn.pipeline import Pipeline
 from tqdm import tqdm
 
 from data_loader import load_data
-from metric_learning import Identity, GMML_Supervised, MeanSCM, SPDMeanSCM
+from metric_learning import\
+        Identity,\
+        GMML_Supervised,\
+        MeanSCM,\
+        RML,\
+        SPDMeanSCM
 
 
 # constants
@@ -24,7 +28,7 @@ N_NEIGHBORS = 5
 N_JOBS = -1
 clf = KNeighborsClassifier(n_neighbors=N_NEIGHBORS, n_jobs=N_JOBS)
 FAST_TEST = True
-ROBUST_METHODS = False
+ROBUST_METHODS = True
 VERBOSE = False
 
 SMALL_DATASETS = True
@@ -246,30 +250,29 @@ for dataset in DATASETS:
             X_test, y_test, metrics_names, metric_name,
             pipe, classif_errors_dict)
 
-        # #RML
-        # if ROBUST_METHODS:
-        #     if dataset not in ['mnist']:
-        #         def RML_evaluate(rho, metric_name):
-        #             metric_learner = RML(
-        #                 rho, regularization_param=1e-8,
-        #                 num_constraints=num_constraints,
-        #                 random_state=SEED)
-        #             pipe = Pipeline(
-        #                 [(metric_name, metric_learner), ('classifier', clf)]
-        #             )
-        #             pipe.fit(X_train, y_train)
-        #             clf_predict_evaluate(
-        #                 X_test, y_test, metrics_names, metric_name,
-        #                 pipe, classif_errors_dict)
+        # RML
+        if ROBUST_METHODS and (dataset not in ['mnist']):
+            def RML_evaluate(rho, metric_name):
+                metric_learner = RML(
+                    rho, regularization_param=1e-8,
+                    num_constraints=num_constraints,
+                    random_state=SEED)
+                pipe = Pipeline(
+                    [(metric_name, metric_learner), ('classifier', clf)]
+                )
+                pipe.fit(X_train, y_train)
+                clf_predict_evaluate(
+                    X_test, y_test, metrics_names, metric_name,
+                    pipe, classif_errors_dict)
 
-        #         metric_name_base = 'RML'
-        #         if VERBOSE:
-        #             print('Metric name:', metric_name_base)
+            metric_name_base = 'RML'
+            if VERBOSE:
+                print('Metric name:', metric_name_base)
 
-        #         def rho_t(t):
-        #             return t
+            def rho_t(t):
+                return t
 
-        #         RML_evaluate(rho_t, metric_name_base)
+            RML_evaluate(rho_t, metric_name_base)
 
     print('Classification errors:')
     t = PrettyTable(['Method', 'Mean error', 'std'])

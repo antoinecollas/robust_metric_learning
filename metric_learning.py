@@ -274,3 +274,113 @@ class SPDMeanSCM(MahalanobisMixin, TransformerMixin):
         self.components_ = components_from_metric(np.atleast_2d(A))
 
         return self
+
+
+# RML: Robust Metric Learning
+# Robust pooled covariance matrix
+
+
+def _create_cost_egrad_RML(rho, pi, X, reg):
+    @pymanopt.function.Callable
+    def cost(params):
+        # likelihoods computation
+        cov = params[1:, :, :]
+        cov_inv = la.inv(cov)
+        Q = np.real(np.einsum('lij,ljk,lik->li', X, cov_inv, X))
+        L = np.mean(rho(Q), axis=1) + np.log(np.real(la.det(cov)))
+
+        # distances computation
+        # A = params[0, :, :]
+        # cov_invsqrt = powm(cov, -0.5)
+        # tmp = logm(cov_invsqrt @ A @ cov_invsqrt)
+        # d = la.norm(tmp, axis=(1, 2)) ** 2
+        d = 0
+
+        # regularized likelihood
+        tmp = pi * (L + reg * d)
+        L_reg = np.sum(tmp)
+
+        return L_reg
+
+    @pymanopt.function.Callable
+    def auto_egrad(params):
+        res = autograd.grad(cost)(params)
+        return res
+
+    return cost, auto_egrad
+
+
+class RML(MahalanobisMixin, TransformerMixin):
+    def __init__(self, rho, regularization_param=0,
+                 num_constraints=None, preprocessor=None,
+                 random_state=None):
+        super(RML, self).__init__(preprocessor)
+        self.rho = rho
+        self.regularization_param = regularization_param
+        self.num_constraints = num_constraints
+        self.random_state = random_state
+
+    def fit(self, X, y):
+        """Create constraints from labels and learn the RML model.
+        Parameters
+        ----------
+        X : (n x d) matrix
+          Input data, where each row corresponds to a single instance.
+        y : (n) array-like
+          Data labels.
+        """
+        rho = self.rho
+        reg = self.regularization_param
+        num_constraints = self.num_constraints
+        random_state = self.random_state
+
+        rnd.seed(random_state)
+        X, y = self._prepare_inputs(X, y, ensure_min_samples=2)
+
+        if num_constraints is None:
+            num_classes = len(np.unique(y))
+            num_constraints = 40 * num_classes * (num_classes - 1)
+
+        classes = np.unique(y).astype(int)
+        K = len(classes)
+        N, p = X.shape
+        pi = np.zeros(K)
+        S = np.zeros((K, num_constraints, p))
+
+        for k in classes:
+            mask = (y == k)
+
+            # compute proportion of k-th class
+            pi[k] = np.sum(mask) / N
+
+            # create positive pairs for the k-th class
+            X_k = X[mask, :]
+            a = rnd.randint(X_k.shape[0], size=num_constraints)
+            b = rnd.randint(X_k.shape[0], size=num_constraints)
+
+            # compute the x_i - x_j
+            S[k, :, :] = X_k[a] - X_k[b]
+
+        # cost
+        cost, egrad = _create_cost_egrad_RML(rho, pi, S, reg)
+
+        # manifold
+        manifold = HermitianPositiveDefinite(p, K + 1)
+
+        # solve
+        init = np.zeros((K + 1, p, p))
+        for k in range(init.shape[0]):
+            init[k, :, :] = np.eye(p)
+        solver = ConjugateGradient(
+            maxiter=1e3, minstepsize=1e-10,
+            mingradnorm=1e-4, logverbosity=2)
+        problem = Problem(manifold=manifold, cost=cost,
+                          egrad=egrad, verbosity=10)
+        A, _ = solver.solve(problem, x=init)
+        A = A[0, :, :]
+        A = powm(A, -1)
+
+        # store
+        self.components_ = components_from_metric(np.atleast_2d(A))
+
+        return self
