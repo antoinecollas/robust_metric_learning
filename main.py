@@ -21,7 +21,7 @@ from metric_learning import\
 SEED = 0
 rnd.seed(SEED)
 
-N_RUNS = 40
+N_RUNS = 5
 TEST_SIZE = 0.5
 N_CV_GRID_SEARCH = 5
 N_NEIGHBORS = 5

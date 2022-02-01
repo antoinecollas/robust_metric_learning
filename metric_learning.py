@@ -375,7 +375,7 @@ class RML(MahalanobisMixin, TransformerMixin):
             maxiter=1e3, minstepsize=1e-10,
             mingradnorm=1e-4, logverbosity=2)
         problem = Problem(manifold=manifold, cost=cost,
-                          egrad=egrad, verbosity=10)
+                          egrad=egrad, verbosity=0)
         A, _ = solver.solve(problem, x=init)
         A = A[0, :, :]
         A = powm(A, -1)
