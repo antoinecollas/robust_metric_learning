@@ -21,7 +21,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install git+https://github.com/HIPS/autograd
+        pip install --upgrade "jax[cpu]"
         pip install git+https://github.com/scikit-learn-contrib/metric-learn
         pip install git+https://github.com/antoinecollas/pymanopt
     - name: Lint with flake8
