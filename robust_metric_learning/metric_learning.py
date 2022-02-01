@@ -288,19 +288,18 @@ def _create_cost_egrad_RML(rho, pi, X, reg):
     def cost(params):
         # likelihoods computation
         cov = params[1:, :, :]
-        cov_inv = jla.inv(cov)
+        cov_inv = powm(cov, -1)
         Q = jnp.real(jnp.einsum('lij,ljk,lik->li', X, cov_inv, X))
         L = jnp.mean(rho(Q), axis=1) + jnp.log(jnp.real(jla.det(cov)))
 
         # distances computation
-        # A = params[0, :, :]
-        # cov_invsqrt = powm(cov, -0.5)
-        # tmp = logm(cov_invsqrt @ A @ cov_invsqrt)
-        # d = jla.norm(tmp, axis=(1, 2)) ** 2
+        A = params[0, :, :]
+        cov_invsqrt = powm(cov, -0.5)
+        tmp = logm(cov_invsqrt @ A @ cov_invsqrt)
+        d = jla.norm(tmp, axis=(1, 2)) ** 2
 
         # regularized likelihood
-        # tmp = pi * (L + reg * d)
-        tmp = L
+        tmp = pi * (L + reg * d)
         L_reg = jnp.sum(tmp)
 
         return L_reg
@@ -374,9 +373,15 @@ class RML(MahalanobisMixin, TransformerMixin):
         manifold = HermitianPositiveDefinite(p, K + 1)
 
         # solve
+        # BE CAREFUL: gradient of eigh can't be computed if
+        # some eigenvalues are equal.
+        # see: https://github.com/google/jax/issues/669#issuecomment-777052841
+        # Hence a good initialization must be chosen...
         init = np.zeros((K + 1, p, p))
-        for k in range(init.shape[0]):
-            init[k, :, :] = np.eye(p)
+        init[0, :, :] = np.cov(X.T)
+        for k in range(1, init.shape[0]):
+            X_k = X[y == (k - 1), :]
+            init[k, :, :] = np.cov(X_k.T)
         solver = ConjugateGradient(
             maxiter=1e3, minstepsize=1e-10,
             mingradnorm=1e-4, logverbosity=2)
