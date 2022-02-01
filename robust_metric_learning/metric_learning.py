@@ -11,7 +11,7 @@ from pymanopt.manifolds import HermitianPositiveDefinite
 from pymanopt.solvers import ConjugateGradient
 from sklearn.base import TransformerMixin
 
-from matrix_operators import logm, powm
+from .matrix_operators import logm, powm
 
 
 # identity
@@ -311,10 +311,13 @@ def _create_cost_egrad_RML(rho, pi, X, reg):
 
 
 class RML(MahalanobisMixin, TransformerMixin):
-    def __init__(self, rho, regularization_param=0,
+    def __init__(self, rho=None, regularization_param=0.1,
                  num_constraints=None, preprocessor=None,
                  random_state=None):
         super(RML, self).__init__(preprocessor)
+        if rho is None:
+            def rho(t):
+                return t
         self.rho = rho
         self.regularization_param = regularization_param
         self.num_constraints = num_constraints
