@@ -1,4 +1,4 @@
-import autograd.numpy as np
+import numpy as np
 import scipy.io as sio
 from sklearn.datasets import load_iris, load_wine
 

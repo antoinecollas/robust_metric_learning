@@ -1,7 +1,10 @@
-import autograd
-import autograd.numpy as np
-import autograd.numpy.linalg as la
-import autograd.numpy.random as rnd
+import jax
+from jax.config import config
+config.update('jax_enable_x64', True)
+import jax.numpy as jnp
+import jax.numpy.linalg as jla
+import numpy as np
+import numpy.random as rnd
 from metric_learn.base_metric import MahalanobisMixin
 from metric_learn.constraints import Constraints, wrap_pairs
 from metric_learn._util import components_from_metric
@@ -87,7 +90,7 @@ class _BaseGMML(MahalanobisMixin):
         S_inv = powm(S, -1)
         A = SPD_mean(S_inv, D, t)
 
-        self.components_ = components_from_metric(np.atleast_2d(A))
+        self.components_ = powm(A, 0.5)
 
         return self
 
@@ -190,14 +193,14 @@ def _create_cost_egrad(pi, S):
     @pymanopt.function.Callable
     def cost(A):
         tmp = logm(S_invsqrt @ A @ S_invsqrt)
-        tmp = la.norm(tmp, axis=(1, 2))**2
+        tmp = jla.norm(tmp, axis=(1, 2))**2
         res = pi * tmp
-        res = np.sum(res)
+        res = jnp.sum(res)
         return res
 
     @pymanopt.function.Callable
     def auto_egrad(A):
-        res = autograd.grad(cost)(A)
+        res = jax.grad(cost)(A)
         return res
 
     return cost, auto_egrad
@@ -285,27 +288,27 @@ def _create_cost_egrad_RML(rho, pi, X, reg):
     def cost(params):
         # likelihoods computation
         cov = params[1:, :, :]
-        cov_inv = la.inv(cov)
-        Q = np.real(np.einsum('lij,ljk,lik->li', X, cov_inv, X))
-        L = np.mean(rho(Q), axis=1) + np.log(np.real(la.det(cov)))
+        cov_inv = jla.inv(cov)
+        Q = jnp.real(jnp.einsum('lij,ljk,lik->li', X, cov_inv, X))
+        L = jnp.mean(rho(Q), axis=1) + jnp.log(jnp.real(jla.det(cov)))
 
         # distances computation
         # A = params[0, :, :]
         # cov_invsqrt = powm(cov, -0.5)
         # tmp = logm(cov_invsqrt @ A @ cov_invsqrt)
-        # d = la.norm(tmp, axis=(1, 2)) ** 2
-        d = 0
+        # d = jla.norm(tmp, axis=(1, 2)) ** 2
 
         # regularized likelihood
-        tmp = pi * (L + reg * d)
-        L_reg = np.sum(tmp)
+        # tmp = pi * (L + reg * d)
+        tmp = L
+        L_reg = jnp.sum(tmp)
 
         return L_reg
 
     @pymanopt.function.Callable
     def auto_egrad(params):
-        res = autograd.grad(cost)(params)
-        return res
+        grad = jax.grad(cost)(params)
+        return grad
 
     return cost, auto_egrad
 
