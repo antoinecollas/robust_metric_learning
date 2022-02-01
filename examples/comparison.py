@@ -43,9 +43,10 @@ def main(
             def NUM_CONST(n_classes):
                 return 40 * n_classes * (n_classes - 1)
 
-        print('##############################')
-        print('DATASET:', dataset)
-        print('##############################')
+        if verbose >= 1:
+            print('##############################')
+            print('DATASET:', dataset)
+            print('##############################')
 
         # load data
         X, y = load_data(dataset)
@@ -55,7 +56,11 @@ def main(
         classif_errors_dict = dict()
         metrics_names = list()
 
-        for i in tqdm(range(n_runs)):
+        iterator = range(n_runs)
+        if verbose >= 1:
+            iterator = tqdm(iterator)
+
+        for i in iterator:
             # train test
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y,
@@ -71,7 +76,7 @@ def main(
 
             # Euclidean
             metric_name = 'Euclidean'
-            if verbose:
+            if verbose >= 2:
                 print('Metric name:', metric_name)
             pipe = Pipeline([(metric_name, Identity()), ('classifier', clf)])
             pipe.fit(X_train, y_train)
@@ -81,7 +86,7 @@ def main(
 
             # SCM
             metric_name = 'SCM'
-            if verbose:
+            if verbose >= 2:
                 print('Metric name:', metric_name)
             pipe = Pipeline([(metric_name, Covariance()), ('classifier', clf)])
             pipe.fit(X_train, y_train)
@@ -96,7 +101,7 @@ def main(
             if not fast_test:
                 # MMC
                 metric_name = 'MMC'
-                if verbose:
+                if verbose >= 2:
                     print('Metric name:', metric_name)
                 metric_learner = MMC_Supervised(
                     num_constraints=num_constraints, random_state=random_state)
@@ -110,7 +115,7 @@ def main(
 
                 # ITML - identity
                 metric_name = 'ITML - identity'
-                if verbose:
+                if verbose >= 2:
                     print('Metric name:', metric_name)
                 metric_learner = ITML_Supervised(
                     prior='identity', num_constraints=num_constraints,
@@ -125,7 +130,7 @@ def main(
 
                 # ITML - SCM
                 metric_name = 'ITML - SCM'
-                if verbose:
+                if verbose >= 2:
                     print('Metric name:', metric_name)
                 metric_learner = ITML_Supervised(
                     prior='covariance', num_constraints=num_constraints,
@@ -145,7 +150,7 @@ def main(
                 reg = 0
 
             metric_name = 'GMML - t=0'
-            if verbose:
+            if verbose >= 2:
                 print('Metric name:', metric_name)
             metric_learner = GMML_Supervised(regularization_param=reg,
                                              balance_param=0,
@@ -164,7 +169,7 @@ def main(
                 balance_param_grid = [0, 0.1, 0.3, 0.5, 0.7, 0.9]
 
             metric_name = 'GMML - CV'
-            if verbose:
+            if verbose >= 2:
                 print('Metric name:', metric_name)
             metric_learner = GMML_Supervised(regularization_param=reg,
                                              num_constraints=num_constraints,
@@ -179,7 +184,7 @@ def main(
                 refit=True, n_jobs=n_jobs)
             grid_search_clf.fit(X_train, y_train)
             pipe = grid_search_clf.best_estimator_
-            if verbose:
+            if verbose >= 2:
                 print('GMML cross val best param:')
                 print(grid_search_clf.best_params_)
             clf_predict_evaluate(X_test, y_test, metrics_names, metric_name,
@@ -192,7 +197,7 @@ def main(
             if not fast_test:
                 # LMNN
                 metric_name = 'LMNN'
-                if verbose:
+                if verbose >= 2:
                     print('Metric name:', metric_name)
                 metric_learner = LMNN(k=n_neighbors, random_state=random_state)
                 pipe = Pipeline(
@@ -209,7 +214,7 @@ def main(
 
             # Mean SCM
             metric_name = 'Mean - SCM'
-            if verbose:
+            if verbose >= 2:
                 print('Metric name:', metric_name)
 
             if dataset == 'mnist':
@@ -260,7 +265,7 @@ def main(
                         pipe, classif_errors_dict)
 
                 metric_name_base = 'RML'
-                if verbose:
+                if verbose >= 2:
                     print('Metric name:', metric_name_base)
 
                 def rho_t(t):
@@ -268,14 +273,16 @@ def main(
 
                 RML_evaluate(rho_t, metric_name_base)
 
-        print('Classification errors:')
-        t = PrettyTable(['Method', 'Mean error', 'std'])
-        for metric_name in metrics_names:
-            mean_error = np.mean(classif_errors_dict[metric_name]) * 100
-            std_error = np.std(classif_errors_dict[metric_name]) * 100
-            t.add_row([metric_name,
-                       str(round(mean_error, 2)), str(round(std_error, 2))])
-        print(t)
+        if verbose >= 1:
+            print('Classification errors:')
+            t = PrettyTable(['Method', 'Mean error', 'std'])
+            for metric_name in metrics_names:
+                mean_error = np.mean(classif_errors_dict[metric_name]) * 100
+                std_error = np.std(classif_errors_dict[metric_name]) * 100
+                t.add_row([metric_name,
+                           str(round(mean_error, 2)),
+                           str(round(std_error, 2))])
+            print(t)
 
         return classif_errors_dict
 
