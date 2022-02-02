@@ -381,7 +381,12 @@ class RML(MahalanobisMixin, TransformerMixin):
         init[0, :, :] = np.cov(X.T)
         for k in range(1, init.shape[0]):
             X_k = X[y == (k - 1), :]
-            init[k, :, :] = np.cov(X_k.T)
+            tmp = np.cov(X_k.T)
+            # check condition number
+            c = jla.cond(tmp)
+            if c > 1e6:
+                tmp = tmp + 1e-3 * (np.trace(tmp) / p) * np.eye(p)
+            init[k, :, :] = tmp
         solver = ConjugateGradient(
             maxiter=1e3, minstepsize=1e-10,
             mingradnorm=1e-4, logverbosity=2)
