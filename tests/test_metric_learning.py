@@ -146,16 +146,22 @@ def test_SPDMeanSCM():
     _check_SPD(M)
 
 
-def test_RML():
+def test_RML_Gaussian():
     X, y = load_data('wine')
 
     # test consistency
-    metric_learner = RML(random_state=123)
+
+    def rho(t):
+        return t
+
+    metric_learner = RML(rho, regularization_param=0.1,
+                         init='SCM', random_state=123)
     A = metric_learner.fit(X, y).components_
     M1 = A.T @ A
     _check_SPD(M1)
 
-    metric_learner = RML(random_state=123)
+    metric_learner = RML(rho, regularization_param=0.1,
+                         init='random', random_state=123)
     A = metric_learner.fit(X, y).components_
     M2 = A.T @ A
     _check_SPD(M2)

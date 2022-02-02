@@ -277,15 +277,6 @@ def main(
 
                 RML_evaluate(rho_t, metric_name)
 
-                metric_name = metric_name_base + '_Tyler'
-                if verbose >= 2:
-                    print('Metric name:', metric_name)
-
-                def rho_t(t):
-                    return t
-
-                RML_evaluate(rho_t, metric_name)
-
         if verbose >= 1:
             print('Classification errors:')
             t = PrettyTable(['Method', 'Mean error', 'std'])

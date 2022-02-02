@@ -314,7 +314,7 @@ def _create_cost_egrad_RML(rho, pi, X, reg):
 
 class RML(MahalanobisMixin, TransformerMixin):
     def __init__(self, rho=None, regularization_param=0.1,
-                 num_constraints=None, preprocessor=None,
+                 init='SCM', num_constraints=None, preprocessor=None,
                  random_state=None):
         super(RML, self).__init__(preprocessor)
         if rho is None:
@@ -322,6 +322,7 @@ class RML(MahalanobisMixin, TransformerMixin):
                 return t
         self.rho = rho
         self.regularization_param = regularization_param
+        self.init = init
         self.num_constraints = num_constraints
         self.random_state = random_state
 
@@ -337,6 +338,7 @@ class RML(MahalanobisMixin, TransformerMixin):
         rho = self.rho
         reg = self.regularization_param
         num_constraints = self.num_constraints
+        init = self.init
         random_state = self.random_state
 
         rnd.seed(random_state)
@@ -372,27 +374,36 @@ class RML(MahalanobisMixin, TransformerMixin):
         # manifold
         manifold = HermitianPositiveDefinite(p, K + 1)
 
-        # solve
+        # initialization
         # BE CAREFUL: gradient of eigh can't be computed if
         # some eigenvalues are equal.
         # see: https://github.com/google/jax/issues/669#issuecomment-777052841
         # Hence a good initialization must be chosen...
-        init = np.zeros((K + 1, p, p))
-        init[0, :, :] = np.cov(X.T)
-        for k in range(1, init.shape[0]):
-            X_k = X[y == (k - 1), :]
-            tmp = np.cov(X_k.T)
-            # check condition number
-            c = jla.cond(tmp)
-            if c > 1e6:
-                tmp = tmp + 1e-3 * (np.trace(tmp) / p) * np.eye(p)
-            init[k, :, :] = tmp
+        init_params = np.zeros((K + 1, p, p))
+        if init == 'SCM':
+            init_params[0, :, :] = np.cov(X.T)
+            for k in range(1, init_params.shape[0]):
+                X_k = X[y == (k - 1), :]
+                tmp = np.cov(X_k.T)
+                # check condition number
+                c = jla.cond(tmp)
+                if c > 1e6:
+                    tmp = tmp + 1e-3 * (np.trace(tmp) / p) * np.eye(p)
+                init_params[k, :, :] = tmp
+        elif init == 'random':
+            for k in range(init_params.shape[0]):
+                X = rnd.normal(size=(10 * p, p))
+                init_params[k, :, :] = np.cov(X.T)
+        else:
+            raise ValueError('Wrong initialization...')
+
+        # solve
         solver = ConjugateGradient(
             maxiter=1e3, minstepsize=1e-10,
             mingradnorm=1e-4, logverbosity=2)
         problem = Problem(manifold=manifold, cost=cost,
                           egrad=egrad, verbosity=0)
-        A, _ = solver.solve(problem, x=init)
+        A, _ = solver.solve(problem, x=init_params)
         A = A[0, :, :]
         A = powm(A, -1)
 
