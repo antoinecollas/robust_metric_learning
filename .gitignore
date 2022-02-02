@@ -2,10 +2,13 @@
 *.swp
 
 # python
+build/*
+dist/*
 __pycache__/*
 examples/__pycache__/*
 tests/__pycache__/*
 robust_metric_learning/__pycache__/*
+robust_metric_learning.egg-info/*
 
 # coverage
 .coverage
