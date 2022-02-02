@@ -1,4 +1,5 @@
 import numpy as np
+import jax.numpy as jnp
 from metric_learn import Covariance, ITML_Supervised, LMNN, MMC_Supervised
 from prettytable import PrettyTable
 from sklearn.metrics import accuracy_score, make_scorer
@@ -222,7 +223,8 @@ def main(
             else:
                 reg = 0
 
-            metric_learner = MeanSCM(regularization_param=reg)
+            metric_learner = MeanSCM(
+                regularization_param=reg, random_state=random_state)
             pipe = Pipeline(
                 [(metric_name, metric_learner), ('classifier', clf)]
             )
@@ -253,7 +255,7 @@ def main(
             if robust_methods and (dataset not in ['mnist']):
                 def RML_evaluate(rho, metric_name):
                     metric_learner = RML(
-                        rho, regularization_param=1e-8,
+                        rho, regularization_param=1e-1,
                         num_constraints=num_constraints,
                         random_state=random_state)
                     pipe = Pipeline(
@@ -265,13 +267,24 @@ def main(
                         pipe, classif_errors_dict)
 
                 metric_name_base = 'RML'
+
+                metric_name = metric_name_base + '_Gaussian'
                 if verbose >= 2:
-                    print('Metric name:', metric_name_base)
+                    print('Metric name:', metric_name)
 
                 def rho_t(t):
                     return t
 
-                RML_evaluate(rho_t, metric_name_base)
+                RML_evaluate(rho_t, metric_name)
+
+                metric_name = metric_name_base + '_Tyler'
+                if verbose >= 2:
+                    print('Metric name:', metric_name)
+
+                def rho_t(t):
+                    return t
+
+                RML_evaluate(rho_t, metric_name)
 
         if verbose >= 1:
             print('Classification errors:')
@@ -284,7 +297,7 @@ def main(
                            str(round(std_error, 2))])
             print(t)
 
-        return classif_errors_dict
+    return classif_errors_dict
 
 
 if __name__ == '__main__':
@@ -297,7 +310,7 @@ if __name__ == '__main__':
     CLF = KNeighborsClassifier(n_neighbors=N_NEIGHBORS, n_jobs=N_JOBS)
     FAST_TEST = True
     ROBUST_METHODS = True
-    VERBOSE = False
+    VERBOSE = 1
     SMALL_DATASETS = True
 
     if SMALL_DATASETS:
