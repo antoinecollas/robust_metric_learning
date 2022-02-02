@@ -1,3 +1,4 @@
+import jax.numpy as jnp
 import numpy as np
 import numpy.linalg as la
 import numpy.random as rnd
@@ -167,3 +168,22 @@ def test_RML_Gaussian():
     _check_SPD(M2)
 
     assert_allclose(M1, M2, rtol=1e-2)
+
+
+def test_RML_robust_rho():
+    X, y = load_data('wine')
+
+    # test other rho functions
+
+    def rho(t):
+        c = 50
+        mask = t <= c
+        res = mask * t
+        res = res + (1 - mask) * c * (jnp.log((t + 1e-3) / c) + 1)
+        return res
+
+    metric_learner = RML(rho, regularization_param=0.1,
+                         init='SCM', random_state=123)
+    A = metric_learner.fit(X, y).components_
+    M = A.T @ A
+    _check_SPD(M)
