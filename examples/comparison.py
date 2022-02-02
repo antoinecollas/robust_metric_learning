@@ -1,5 +1,5 @@
 import numpy as np
-import jax.numpy as jnp
+# import jax.numpy as jnp
 from metric_learn import Covariance, ITML_Supervised, LMNN, MMC_Supervised
 from prettytable import PrettyTable
 from sklearn.metrics import accuracy_score, make_scorer
