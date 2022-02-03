@@ -272,23 +272,16 @@ def main(
                 def rho(t):
                     return t
 
-                metric_name = metric_name_base + '_Gaussian_Riemannian'
-                if verbose >= 2:
-                    print('Metric name:', metric_name)
-                metric_learner = RML(rho, divergence='Riemannian',
-                                     regularization_param=0.1,
-                                     init='SCM', manifold='SPD',
-                                     random_state=123)
-                RML_evaluate(metric_learner, metric_name)
-
-                metric_name = metric_name_base + '_Gaussian_Riemannian_SSPD'
-                if verbose >= 2:
-                    print('Metric name:', metric_name)
-                metric_learner = RML(rho, divergence='Riemannian',
-                                     regularization_param=0.1,
-                                     init='SCM', manifold='SSPD',
-                                     random_state=123)
-                RML_evaluate(metric_learner, metric_name)
+                for reg in [1, 0.1, 0.01]:
+                    metric_name = metric_name_base + '_Gaussian_Riemannian'
+                    metric_name += '_' + str(reg)
+                    if verbose >= 2:
+                        print('Metric name:', metric_name)
+                    metric_learner = RML(rho, divergence='Riemannian',
+                                         regularization_param=reg,
+                                         init='SCM', manifold='SPD',
+                                         random_state=123)
+                    RML_evaluate(metric_learner, metric_name)
 
                 # ###################
                 # Tyler
@@ -297,14 +290,16 @@ def main(
                 def rho(t):
                     return p * jnp.log(t)
 
-                metric_name = metric_name_base + '_Tyler_Riemannian'
-                if verbose >= 2:
-                    print('Metric name:', metric_name)
-                metric_learner = RML(rho, divergence='Riemannian',
-                                     regularization_param=0.1,
-                                     init='SCM', manifold='SSPD',
-                                     random_state=123)
-                RML_evaluate(metric_learner, metric_name)
+                for reg in [1, 0.1, 0.01]:
+                    metric_name = metric_name_base + '_Tyler_Riemannian'
+                    metric_name += '_' + str(reg)
+                    if verbose >= 2:
+                        print('Metric name:', metric_name)
+                    metric_learner = RML(rho, divergence='Riemannian',
+                                         regularization_param=reg,
+                                         init='SCM', manifold='SSPD',
+                                         random_state=123)
+                    RML_evaluate(metric_learner, metric_name)
 
         if verbose >= 1:
             print('Classification errors:')

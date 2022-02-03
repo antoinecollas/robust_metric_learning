@@ -467,7 +467,7 @@ class RML(MahalanobisMixin, TransformerMixin):
         # solve
         solver = ConjugateGradient(
             maxiter=1e3, minstepsize=1e-10,
-            mingradnorm=1e-5, logverbosity=2)
+            mingradnorm=1e-3, logverbosity=2)
         problem = Problem(manifold=manifold, cost=cost,
                           egrad=egrad, verbosity=0)
         A, _ = solver.solve(problem, x=init_params)
