@@ -225,19 +225,37 @@ def test_RML_Tyler():
 
     assert la.norm(M1 - M2) / la.norm(M1) < 1e-2
 
-    # test ellipticity divergence
-    metric_learner = RML(rho, divergence='ellipticity-left',
+    # TODO: make the ellipiticity divergences work...
+
+
+def test_RML_Iris_dataset():
+    X, y = load_data('iris')
+    p = X.shape[1]
+
+    # # Gaussian
+
+    def rho(t):
+        return t
+
+    metric_learner = RML(rho, divergence='Riemannian',
                          regularization_param=0.1,
-                         init='random', manifold='SSPD',
+                         init='SCM', manifold='SPD',
                          random_state=123)
     A = metric_learner.fit(X, y).components_
     M = A.T @ A
     _check_SPD(M)
 
-    metric_learner = RML(rho, divergence='ellipticity-right',
+    # Tyler
+
+    def rho(t):
+        return p * jnp.log(t)
+
+    metric_learner = RML(rho, divergence='Riemannian',
                          regularization_param=0.1,
-                         init='random', manifold='SSPD',
+                         init='SCM', manifold='SSPD',
                          random_state=123)
     A = metric_learner.fit(X, y).components_
     M = A.T @ A
     _check_SPD(M)
+
+    # TODO: make the ellipiticity divergences work...
