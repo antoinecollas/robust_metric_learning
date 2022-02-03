@@ -8,7 +8,8 @@ from metric_learn.constraints import Constraints, wrap_pairs
 from metric_learn._util import components_from_metric
 import pymanopt
 from pymanopt import Problem
-from pymanopt.manifolds import HermitianPositiveDefinite
+from pymanopt.manifolds import (HermitianPositiveDefinite,
+                                SpecialHermitianPositiveDefinite)
 from pymanopt.solvers import ConjugateGradient
 from sklearn.base import TransformerMixin
 
@@ -283,7 +284,45 @@ class SPDMeanSCM(MahalanobisMixin, TransformerMixin):
 # Robust pooled covariance matrix
 
 
-def _create_cost_egrad_RML(rho, pi, X, reg):
+def _create_cost_egrad_RML(rho, divergence, pi, X, reg):
+    p = X.shape[1]
+
+    def squared_Riemannian_distance(A, B):
+        B_invsqrt = powm(B, -0.5)
+        tmp = logm(B_invsqrt @ A @ B_invsqrt)
+        d = jla.norm(tmp, axis=(1, 2)) ** 2
+        return d
+
+    def KL_left(A, B):
+        C = powm(A, -1) @ B
+        d = jnp.trace(C, axis1=-2, axis2=-1) - jnp.log(jla.det(C))
+        return d
+
+    def KL_right(A, B):
+        return KL_left(B, A)
+
+    def ellipticity_left(A, B):
+        C = powm(A, -1) @ B
+        d = p * jnp.log(jnp.trace(C, axis1=-2, axis2=-1))
+        d = d - jnp.log(jla.det(C))
+        return d
+
+    def ellipticity_right(A, B):
+        return ellipticity_left(B, A)
+
+    if divergence == 'Riemannian':
+        div = squared_Riemannian_distance
+    elif divergence == 'KL-right':
+        div = KL_right
+    elif divergence == 'KL-left':
+        div = KL_left
+    elif divergence == 'ellipticity-right':
+        div = ellipticity_right
+    elif divergence == 'ellipticity-left':
+        div = ellipticity_left
+    else:
+        raise ValueError('Divergence not implemented: ' + divergence)
+
     @pymanopt.function.Callable
     def cost(params):
         # likelihoods computation
@@ -294,9 +333,7 @@ def _create_cost_egrad_RML(rho, pi, X, reg):
 
         # distances computation
         A = params[0, :, :]
-        cov_invsqrt = powm(cov, -0.5)
-        tmp = logm(cov_invsqrt @ A @ cov_invsqrt)
-        d = jla.norm(tmp, axis=(1, 2)) ** 2
+        d = div(A, cov)
 
         # regularized likelihood
         tmp = pi * (L + reg * d)
@@ -306,6 +343,7 @@ def _create_cost_egrad_RML(rho, pi, X, reg):
 
     @pymanopt.function.Callable
     def auto_egrad(params):
+        # print(jnp.real(jla.eigvals(params[0, :, :])))
         grad = jax.grad(cost)(params)
         return grad
 
@@ -313,16 +351,20 @@ def _create_cost_egrad_RML(rho, pi, X, reg):
 
 
 class RML(MahalanobisMixin, TransformerMixin):
-    def __init__(self, rho=None, regularization_param=0.1,
-                 init='SCM', num_constraints=None, preprocessor=None,
+    def __init__(self, rho=None, divergence='Riemannian',
+                 regularization_param=0.1,
+                 init='SCM', manifold='SPD',
+                 num_constraints=None, preprocessor=None,
                  random_state=None):
         super(RML, self).__init__(preprocessor)
         if rho is None:
             def rho(t):
                 return t
         self.rho = rho
+        self.divergence = divergence
         self.regularization_param = regularization_param
         self.init = init
+        self.manifold = manifold
         self.num_constraints = num_constraints
         self.random_state = random_state
 
@@ -336,9 +378,11 @@ class RML(MahalanobisMixin, TransformerMixin):
           Data labels.
         """
         rho = self.rho
+        divergence = self.divergence
         reg = self.regularization_param
         num_constraints = self.num_constraints
         init = self.init
+        manifold_name = self.manifold
         random_state = self.random_state
 
         rnd.seed(random_state)
@@ -364,15 +408,22 @@ class RML(MahalanobisMixin, TransformerMixin):
             X_k = X[mask, :]
             a = rnd.randint(X_k.shape[0], size=num_constraints)
             b = rnd.randint(X_k.shape[0], size=num_constraints)
+            while np.sum(a == b) > 0:
+                b = rnd.randint(X_k.shape[0], size=num_constraints)
 
             # compute the x_i - x_j
             S[k, :, :] = X_k[a] - X_k[b]
 
         # cost
-        cost, egrad = _create_cost_egrad_RML(rho, pi, S, reg)
+        cost, egrad = _create_cost_egrad_RML(rho, divergence, pi, S, reg)
 
         # manifold
-        manifold = HermitianPositiveDefinite(p, K + 1)
+        if manifold_name == 'SPD':
+            manifold = HermitianPositiveDefinite(p, K + 1)
+        elif manifold_name == 'SSPD':
+            manifold = SpecialHermitianPositiveDefinite(p, K + 1)
+        else:
+            raise ValueError('Wrong manifold...')
 
         # initialization
         # BE CAREFUL: gradient of eigh can't be computed if
@@ -384,12 +435,7 @@ class RML(MahalanobisMixin, TransformerMixin):
             init_params[0, :, :] = np.cov(X.T)
             for k in range(1, init_params.shape[0]):
                 X_k = X[y == (k - 1), :]
-                tmp = np.cov(X_k.T)
-                # check condition number
-                c = jla.cond(tmp)
-                if c > 1e6:
-                    tmp = tmp + 1e-3 * (np.trace(tmp) / p) * np.eye(p)
-                init_params[k, :, :] = tmp
+                init_params[k, :, :] = np.cov(X_k.T)
         elif init == 'random':
             for k in range(init_params.shape[0]):
                 X = rnd.normal(size=(10 * p, p))
@@ -397,10 +443,24 @@ class RML(MahalanobisMixin, TransformerMixin):
         else:
             raise ValueError('Wrong initialization...')
 
+        # check condition number
+        for k in range(init_params.shape[0]):
+            tmp = init_params[k, :, :]
+            c = jla.cond(tmp)
+            if c > 1e6:
+                tmp = tmp + 1e-3 * (np.trace(tmp) / p) * np.eye(p)
+                init_params[k, :, :] = tmp
+
+        # init with unit det if the manifold is SSPD
+        if manifold_name == 'SSPD':
+            for k in range(init_params.shape[0]):
+                tmp = init_params[k, :, :]
+                init_params[k, :, :] = tmp / (jla.det(tmp) ** (1 / p))
+
         # solve
         solver = ConjugateGradient(
             maxiter=1e3, minstepsize=1e-10,
-            mingradnorm=1e-4, logverbosity=2)
+            mingradnorm=1e-3, logverbosity=2)
         problem = Problem(manifold=manifold, cost=cost,
                           egrad=egrad, verbosity=0)
         A, _ = solver.solve(problem, x=init_params)

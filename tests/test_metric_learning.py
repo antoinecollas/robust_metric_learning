@@ -156,34 +156,88 @@ def test_RML_Gaussian():
         return t
 
     metric_learner = RML(rho, regularization_param=0.1,
-                         init='SCM', random_state=123)
+                         init='SCM', manifold='SPD',
+                         random_state=123)
     A = metric_learner.fit(X, y).components_
     M1 = A.T @ A
     _check_SPD(M1)
 
     metric_learner = RML(rho, regularization_param=0.1,
-                         init='random', random_state=123)
+                         init='random', manifold='SPD',
+                         random_state=123)
     A = metric_learner.fit(X, y).components_
     M2 = A.T @ A
     _check_SPD(M2)
 
-    assert_allclose(M1, M2, rtol=1e-2)
+    assert la.norm(M1 - M2) / la.norm(M1) < 1e-2
+
+    # test the different divergences
+
+    metric_learner = RML(rho, divergence='Riemannian',
+                         regularization_param=0.1,
+                         init='random', manifold='SPD',
+                         random_state=123)
+    A = metric_learner.fit(X, y).components_
+    M = A.T @ A
+    _check_SPD(M)
+
+    metric_learner = RML(rho, divergence='KL-left',
+                         regularization_param=0.1,
+                         init='random', manifold='SPD',
+                         random_state=123)
+    A = metric_learner.fit(X, y).components_
+    M = A.T @ A
+    _check_SPD(M)
+
+    metric_learner = RML(rho, divergence='KL-right',
+                         regularization_param=0.1,
+                         init='random', manifold='SPD',
+                         random_state=123)
+    A = metric_learner.fit(X, y).components_
+    M = A.T @ A
+    _check_SPD(M)
 
 
-def test_RML_robust_rho():
+def test_RML_Tyler():
     X, y = load_data('wine')
+    p = X.shape[1]
 
-    # test other rho functions
+    # test consistency and Tyler cost function
 
     def rho(t):
-        c = 50
-        mask = t <= c
-        res = mask * t
-        res = res + (1 - mask) * c * (jnp.log((t + 1e-3) / c) + 1)
-        return res
+        return p * jnp.log(t)
 
-    metric_learner = RML(rho, regularization_param=0.1,
-                         init='SCM', random_state=123)
+    metric_learner = RML(rho, divergence='Riemannian',
+                         regularization_param=0.1,
+                         init='SCM', manifold='SSPD',
+                         random_state=123)
+    A = metric_learner.fit(X, y).components_
+    M1 = A.T @ A
+    _check_SPD(M1)
+
+    metric_learner = RML(rho, divergence='Riemannian',
+                         regularization_param=0.1,
+                         init='random', manifold='SSPD',
+                         random_state=123)
+    A = metric_learner.fit(X, y).components_
+    M2 = A.T @ A
+    _check_SPD(M2)
+
+    assert la.norm(M1 - M2) / la.norm(M1) < 1e-2
+
+    # test ellipticity divergence
+    metric_learner = RML(rho, divergence='ellipticity-left',
+                         regularization_param=0.1,
+                         init='random', manifold='SSPD',
+                         random_state=123)
+    A = metric_learner.fit(X, y).components_
+    M = A.T @ A
+    _check_SPD(M)
+
+    metric_learner = RML(rho, divergence='ellipticity-right',
+                         regularization_param=0.1,
+                         init='random', manifold='SSPD',
+                         random_state=123)
     A = metric_learner.fit(X, y).components_
     M = A.T @ A
     _check_SPD(M)

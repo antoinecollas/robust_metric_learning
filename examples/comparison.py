@@ -1,5 +1,5 @@
 import numpy as np
-# import jax.numpy as jnp
+import jax.numpy as jnp
 from metric_learn import Covariance, ITML_Supervised, LMNN, MMC_Supervised
 from prettytable import PrettyTable
 from sklearn.metrics import accuracy_score, make_scorer
@@ -253,11 +253,8 @@ def main(
 
             # RML
             if robust_methods and (dataset not in ['mnist']):
-                def RML_evaluate(rho, metric_name):
-                    metric_learner = RML(
-                        rho, regularization_param=1e-1,
-                        num_constraints=num_constraints,
-                        random_state=random_state)
+                def RML_evaluate(metric_learner, metric_name):
+
                     pipe = Pipeline(
                         [(metric_name, metric_learner), ('classifier', clf)]
                     )
@@ -268,14 +265,81 @@ def main(
 
                 metric_name_base = 'RML'
 
-                metric_name = metric_name_base + '_Gaussian'
+                # ###################
+                # Gaussian
+                # ###################
+
+                def rho(t):
+                    return t
+                metric_name = metric_name_base + '_Gaussian_Riemannian'
                 if verbose >= 2:
                     print('Metric name:', metric_name)
+                metric_learner = RML(rho, divergence='Riemannian',
+                                     regularization_param=0.1,
+                                     init='random', manifold='SPD',
+                                     random_state=123)
+                RML_evaluate(metric_learner, metric_name)
 
-                def rho_t(t):
-                    return t
+                metric_name = metric_name_base + '_Gaussian_KL-left'
+                if verbose >= 2:
+                    print('Metric name:', metric_name)
+                metric_learner = RML(rho, divergence='KL-left',
+                                     regularization_param=0.1,
+                                     init='random', manifold='SPD',
+                                     random_state=123)
+                RML_evaluate(metric_learner, metric_name)
 
-                RML_evaluate(rho_t, metric_name)
+                metric_name = metric_name_base + '_Gaussian_KL-right'
+                if verbose >= 2:
+                    print('Metric name:', metric_name)
+                metric_learner = RML(rho, divergence='KL-right',
+                                     regularization_param=0.1,
+                                     init='random', manifold='SPD',
+                                     random_state=123)
+                RML_evaluate(metric_learner, metric_name)
+
+                # ###################
+                # Tyler
+                # ###################
+
+                def rho(t):
+                    return p * jnp.log(t)
+
+                metric_name = metric_name_base + '_Tyler_Riemannian'
+                if verbose >= 2:
+                    print('Metric name:', metric_name)
+                metric_learner = RML(rho, divergence='Riemannian',
+                                     regularization_param=0.1,
+                                     init='random', manifold='SSPD',
+                                     random_state=123)
+                RML_evaluate(metric_learner, metric_name)
+
+                metric_name = metric_name_base + '_Tyler_KL-left'
+                if verbose >= 2:
+                    print('Metric name:', metric_name)
+                metric_learner = RML(rho, divergence='KL-left',
+                                     regularization_param=0.1,
+                                     init='random', manifold='SSPD',
+                                     random_state=123)
+                RML_evaluate(metric_learner, metric_name)
+
+                metric_name = metric_name_base + '_Tyler_KL-right'
+                if verbose >= 2:
+                    print('Metric name:', metric_name)
+                metric_learner = RML(rho, divergence='KL-right',
+                                     regularization_param=0.1,
+                                     init='random', manifold='SSPD',
+                                     random_state=123)
+                RML_evaluate(metric_learner, metric_name)
+
+                metric_name = metric_name_base + '_Tyler_ellipticity-left'
+                if verbose >= 2:
+                    print('Metric name:', metric_name)
+                metric_learner = RML(rho, divergence='ellipticity-left',
+                                     regularization_param=0.1,
+                                     init='random', manifold='SSPD',
+                                     random_state=123)
+                RML_evaluate(metric_learner, metric_name)
 
         if verbose >= 1:
             print('Classification errors:')
