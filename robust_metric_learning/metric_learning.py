@@ -408,11 +408,18 @@ class RML(MahalanobisMixin, TransformerMixin):
             X_k = X[mask, :]
             a = rnd.randint(X_k.shape[0], size=num_constraints)
             b = rnd.randint(X_k.shape[0], size=num_constraints)
-            while np.sum(a == b) > 0:
-                b = rnd.randint(X_k.shape[0], size=num_constraints)
 
             # compute the x_i - x_j
             S[k, :, :] = X_k[a] - X_k[b]
+
+            # make sure that the vectors of S[k, :, :]  \neq 0
+            THRESHOLD = 1e-16
+            mask = jla.norm(S[k, :, :], axis=1) < THRESHOLD
+            while np.sum(mask) > 0:
+                a = rnd.randint(X_k.shape[0], size=np.sum(mask))
+                b = rnd.randint(X_k.shape[0], size=np.sum(mask))
+                S[k, mask, :] = X_k[a] - X_k[b]
+                mask = jla.norm(S[k, :, :], axis=1) < THRESHOLD
 
         # cost
         cost, egrad = _create_cost_egrad_RML(rho, divergence, pi, S, reg)
