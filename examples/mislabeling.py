@@ -6,7 +6,6 @@ import numpy as np
 import numpy.random as rnd
 from metric_learn import Covariance, ITML_Supervised, LMNN
 import os
-from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
@@ -14,9 +13,10 @@ import tikzplotlib
 from tqdm import tqdm
 
 from robust_metric_learning.data_loader import load_data
-from robust_metric_learning.evaluation import create_directory
+from robust_metric_learning.evaluation import\
+        create_directory, clf_predict_evaluate
 from robust_metric_learning.metric_learning import\
-        (Identity, GMML_Supervised, RML)
+        Identity, GMML_Supervised, RML
 
 
 def main(
@@ -31,16 +31,6 @@ def main(
 ):
     matplotlib.use('Agg')
     path = create_directory('mislabeling')
-
-    def clf_predict_evaluate(X_test, y_test,
-                             metrics_names, metric_name,
-                             clf, errors_dict):
-        y_pred = clf.predict(X_test)
-        error = 1 - accuracy_score(y_test, y_pred)
-        if metric_name not in metrics_names:
-            metrics_names.append(metric_name)
-            errors_dict[metric_name] = list()
-        errors_dict[metric_name].append(error)
 
     for dataset in datasets:
         if dataset in ['mnist', 'isolet']:
@@ -69,7 +59,7 @@ def main(
             if verbose >= 1:
                 to_print = '##################### FRACTION MISLABELING:'
                 to_print += str(fraction_mislabeling)
-                to_print += '#####################'
+                to_print += ' #####################'
                 print(to_print)
 
             iterator_n_runs = range(n_runs)
@@ -131,28 +121,22 @@ def main(
                 metric_name = 'ITML - identity'
                 if verbose >= 2:
                     print('Metric name:', metric_name)
+                if (dataset in ['iris']) and (frac_mislabel > 0.15):
+                    # the only way to make it work is to reduce gamma
+                    gamma = 1e-3
+                else:
+                    gamma = 1
                 metric_learner = ITML_Supervised(
-                    prior='identity', num_constraints=num_constraints,
+                    gamma=gamma,
+                    num_constraints=num_constraints,
                     random_state=random_state)
                 pipe = Pipeline(
                     [(metric_name, metric_learner), ('classifier', clf)]
                 )
                 pipe.fit(X_train, y_train)
-                clf_predict_evaluate(
-                    X_test, y_test, metrics_names, metric_name,
-                    pipe, errors_dict)
-
-                # ITML - SCM
-                metric_name = 'ITML - SCM'
-                if verbose >= 2:
-                    print('Metric name:', metric_name)
-                metric_learner = ITML_Supervised(
-                    prior='covariance', num_constraints=num_constraints,
-                    random_state=random_state)
-                pipe = Pipeline(
-                    [(metric_name, metric_learner), ('classifier', clf)]
-                )
-                pipe.fit(X_train, y_train)
+                # A = pipe.named_steps[metric_name].components_
+                # M = A.T @ A
+                # print(np.linalg.eigvals(M))
                 clf_predict_evaluate(
                     X_test, y_test, metrics_names, metric_name,
                     pipe, errors_dict)
@@ -267,7 +251,7 @@ def main(
 
 if __name__ == '__main__':
     RANDOM_STATE = 0
-    N_RUNS = 40
+    N_RUNS = 2
     TEST_SIZE = 0.5
     FRACTIONS_MISLABELING = [0, 0.05, 0.1, 0.15, 0.2]
     N_CV_GRID_SEARCH = 5
@@ -276,12 +260,12 @@ if __name__ == '__main__':
     CLF = KNeighborsClassifier(n_neighbors=N_NEIGHBORS, n_jobs=N_JOBS)
     VERBOSE = 1
 
-    SMALL_DATASETS = True
-    if SMALL_DATASETS:
-        DATASETS = ['wine', 'pima', 'vehicle']
-        DATASETS = DATASETS + ['australian', 'iris']
-    else:
-        DATASETS = ['mnist', 'isolet', 'letters']
+    # SMALL_DATASETS = True
+    # if SMALL_DATASETS:
+    #     DATASETS = ['wine', 'pima', 'vehicle']
+    #     DATASETS = DATASETS + ['australian', 'iris']
+    # else:
+    #     DATASETS = ['mnist', 'isolet', 'letters']
     DATASETS = ['wine', 'vehicle', 'iris']
 
     main(

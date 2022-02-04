@@ -13,8 +13,6 @@ def test_comparison():
     N_NEIGHBORS = 5
     N_JOBS = 1
     CLF = KNeighborsClassifier(n_neighbors=N_NEIGHBORS, n_jobs=N_JOBS)
-    FAST_TEST = True
-    ROBUST_METHODS = True
     VERBOSE = 0
 
     main_comparison(
@@ -26,8 +24,6 @@ def test_comparison():
         n_neighbors=N_NEIGHBORS,
         n_jobs=N_JOBS,
         clf=CLF,
-        fast_test=FAST_TEST,
-        robust_methods=ROBUST_METHODS,
         verbose=VERBOSE
     )
 
