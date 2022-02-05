@@ -1,6 +1,7 @@
 from sklearn.neighbors import KNeighborsClassifier
 
 from examples.comparison import main as main_comparison
+from examples.datasets import main as main_datasets
 from examples.mislabeling import main as main_mislabeling
 
 
@@ -26,6 +27,13 @@ def test_comparison():
         clf=CLF,
         verbose=VERBOSE
     )
+
+
+def test_datasets():
+    DATASETS = ['wine']
+    VERBOSE = 0
+
+    main_datasets(datasets=DATASETS, verbose=VERBOSE)
 
 
 def test_mislabeling():
