@@ -65,6 +65,7 @@ def load_data(str_dataset):
         raise ValueError(error)
 
     # remap classes to 0, ..., K-1
+    y = y.astype(int)
     classes = np.unique(y)
     for k, c in enumerate(classes):
         y[y == c] = k
