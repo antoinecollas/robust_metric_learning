@@ -41,6 +41,7 @@ def main(
                 return 40 * n_classes * (n_classes - 1)
 
         if verbose >= 1:
+            print()
             print('##############################')
             print('DATASET:', dataset)
             print('##############################')
@@ -80,9 +81,9 @@ def main(
                 new_y_train = deepcopy(y_train)
                 frac_mislabel = np.sum(new_y_train != y_train) / len(y_train)
                 while frac_mislabel < fraction_mislabeling:
-                    idx1 = rnd.randint(len(y_train))
-                    idx2 = rnd.randint(len(y_train))
-                    new_y_train[idx1] = y_train[idx2]
+                    idx = rnd.randint(len(y_train))
+                    new_class = rnd.randint(np.max(y_train))
+                    new_y_train[idx] = new_class
                     frac_mislabel = np.sum(new_y_train != y_train)
                     frac_mislabel /= len(y_train)
                 y_train = new_y_train
@@ -199,7 +200,7 @@ def main(
                 def rho(t):
                     return t
 
-                for reg in [0.1]:
+                for reg in [1, 0.1, 0.01]:
                     metric_name = metric_name_base + '_Gaussian'
                     metric_name += '_' + str(reg)
                     if verbose >= 2:
@@ -213,7 +214,7 @@ def main(
                 def rho(t):
                     return p * jnp.log(t)
 
-                for reg in [0.1]:
+                for reg in [1, 0.1, 0.01]:
                     metric_name = metric_name_base + '_Tyler'
                     metric_name += '_' + str(reg)
                     if verbose >= 2:
