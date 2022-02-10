@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import scipy.io as sio
 from sklearn.datasets import load_iris, load_wine
 
@@ -44,6 +45,36 @@ def load_data(str_dataset):
         X[:, 5][X[:, 5] == -1] = mean
         assert (X >= 1).all()
         assert (X <= 10).all()
+    elif str_dataset == 'segment':
+        path = 'data/segmentation.txt'
+
+        def convert_classes(s):
+            s = str(s).lower()
+            if s == 'brickface':
+                return 0
+            elif s == 'sky':
+                return 1
+            elif s == 'foliage':
+                return 2
+            elif s == 'cement':
+                return 3
+            elif s == 'window':
+                return 4
+            elif s == 'path':
+                return 5
+            elif s == 'grass':
+                return 6
+            else:
+                return ValueError('Wrong classname...')
+
+        # data = np.genfromtxt(path, converters=converters,
+        #                      delimiter=',', skip_header=5)
+        data = pd.read_csv(path, delimiter=',', skiprows=3)
+        X = data.to_numpy()
+        tmp = list(data.index)
+        y = np.zeros(len(tmp))
+        for i, s in enumerate(tmp):
+            y[i] = convert_classes(s)
     elif str_dataset == 'mnist':
         path = 'data/2k2k.mat'
         matstruct_contents = sio.loadmat(path)

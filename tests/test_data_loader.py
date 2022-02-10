@@ -39,6 +39,10 @@ def test_load_breast_cancer():
     _test_dataset('breast-cancer', N=699, p=9, K=2)
 
 
+def test_load_segment():
+    _test_dataset('segment', N=2310, p=19, K=7)
+
+
 def test_load_mnist():
     _test_dataset('mnist', N=4000, p=784, K=10)
 

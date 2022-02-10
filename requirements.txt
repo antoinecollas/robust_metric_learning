@@ -2,6 +2,7 @@ flake8
 nose2
 matplotlib
 numpy
+pandas
 prettytable
 scikit-learn
 scipy
