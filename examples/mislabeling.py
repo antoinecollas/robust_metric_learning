@@ -122,7 +122,7 @@ def main(
                 metric_name = 'ITML - identity'
                 if verbose >= 2:
                     print('Metric name:', metric_name)
-                if (dataset in ['iris']) and (frac_mislabel > 0.15):
+                if (dataset in ['iris']) and (frac_mislabel > 0):
                     # the only way to make it work is to reduce gamma
                     gamma = 0
                 else:
@@ -200,7 +200,7 @@ def main(
                 def rho(t):
                     return t
 
-                for reg in [1, 0.1, 0.01]:
+                for reg in [1, 0.1, 0.05]:
                     metric_name = metric_name_base + '_Gaussian'
                     metric_name += '_' + str(reg)
                     if verbose >= 2:
@@ -214,7 +214,7 @@ def main(
                 def rho(t):
                     return p * jnp.log(t)
 
-                for reg in [1, 0.1, 0.01]:
+                for reg in [1, 0.1, 0.05]:
                     metric_name = metric_name_base + '_Tyler'
                     metric_name += '_' + str(reg)
                     if verbose >= 2:
