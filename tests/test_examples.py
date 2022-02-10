@@ -39,9 +39,9 @@ def test_datasets():
 def test_mislabeling():
     RANDOM_STATE = 0
     DATASETS = ['wine']
-    N_RUNS = 3
+    N_RUNS = 2
     TEST_SIZE = 0.5
-    FRACTIONS_MISLABELING = [0, 0.05, 0.1]
+    FRACTIONS_MISLABELING = [0, 0.1]
     N_NEIGHBORS = 5
     N_JOBS = -1
     CLF = KNeighborsClassifier(n_neighbors=N_NEIGHBORS, n_jobs=N_JOBS)
