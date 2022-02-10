@@ -6,6 +6,7 @@ import numpy as np
 import numpy.random as rnd
 from metric_learn import Covariance, ITML_Supervised, LMNN
 import os
+from prettytable import PrettyTable
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
@@ -251,25 +252,37 @@ def main(
         tikzplotlib.save(path_fig + '.tex')
         plt.close('all')
 
+        # table and save
+        tmp = ['Methods']
+        for mislabel_rate in x:
+            tmp.append(str(mislabel_rate) + '%')
+        t = PrettyTable(tmp)
+        t.title = 'Mean error (in %) with respect to mislabeling rate'
+        for key in mean_errors_dict_frac_mislabels:
+            y = mean_errors_dict_frac_mislabels[key]
+            row = [key]
+            for value in y:
+                row.append(str(round(value, 2)))
+            t.add_row(row)
+        if verbose >= 1:
+            print('Classification errors:')
+            print(t)
+
+        path_table = os.path.join(path, 'results_' + dataset + '.txt')
+        with open(path_table, 'a') as f:
+            print(t, file=f)
+
 
 if __name__ == '__main__':
     RANDOM_STATE = 0
+    DATASETS = ['wine', 'vehicle', 'iris']
     N_RUNS = 40
     TEST_SIZE = 0.5
     FRACTIONS_MISLABELING = [0, 0.05, 0.1, 0.15, 0.2]
-    N_CV_GRID_SEARCH = 5
     N_NEIGHBORS = 5
     N_JOBS = -1
     CLF = KNeighborsClassifier(n_neighbors=N_NEIGHBORS, n_jobs=N_JOBS)
     VERBOSE = 1
-
-    # SMALL_DATASETS = True
-    # if SMALL_DATASETS:
-    #     DATASETS = ['wine', 'pima', 'vehicle']
-    #     DATASETS = DATASETS + ['australian', 'iris']
-    # else:
-    #     DATASETS = ['mnist', 'isolet', 'letters']
-    DATASETS = ['wine', 'vehicle', 'iris']
 
     main(
         random_state=RANDOM_STATE,
