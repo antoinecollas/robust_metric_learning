@@ -280,7 +280,7 @@ def main(
 
 if __name__ == '__main__':
     RANDOM_STATE = 0
-    N_RUNS = 2
+    N_RUNS = 40
     TEST_SIZE = 0.5
     N_CV_GRID_SEARCH = 5
     N_NEIGHBORS = 5
