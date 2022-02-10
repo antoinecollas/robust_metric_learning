@@ -32,6 +32,7 @@ def main(
 ):
     matplotlib.use('Agg')
     path = create_directory('mislabeling')
+    rnd.seed(random_state)
 
     for dataset in datasets:
         if dataset in ['mnist', 'isolet']:
