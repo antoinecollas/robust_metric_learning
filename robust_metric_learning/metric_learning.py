@@ -151,14 +151,15 @@ class MeanSCM(MahalanobisMixin, TransformerMixin):
 
         rnd.seed(random_state)
         X, y = self._prepare_inputs(X, y, ensure_min_samples=2)
+        num_classes = len(np.unique(y))
 
         if num_constraints is None:
-            num_classes = len(np.unique(y))
             num_constraints = 40 * num_classes * (num_classes - 1)
 
         N, p = X.shape
         A = np.zeros_like(X.T @ X)
         classes = np.unique(y)
+        num_constraints_per_class = int(num_constraints / num_classes)
 
         for k in classes:
             mask = (y == k)
@@ -168,8 +169,8 @@ class MeanSCM(MahalanobisMixin, TransformerMixin):
 
             # create positive pairs for the k-th class
             X_k = X[mask, :]
-            a = rnd.randint(X_k.shape[0], size=num_constraints)
-            b = rnd.randint(X_k.shape[0], size=num_constraints)
+            a = rnd.randint(X_k.shape[0], size=num_constraints_per_class)
+            b = rnd.randint(X_k.shape[0], size=num_constraints_per_class)
 
             # compute SCM on the similarity vectors
             tmp = X_k[a] - X_k[b]
@@ -231,15 +232,16 @@ class SPDMeanSCM(MahalanobisMixin, TransformerMixin):
 
         rnd.seed(random_state)
         X, y = self._prepare_inputs(X, y, ensure_min_samples=2)
+        num_classes = len(np.unique(y))
 
         if num_constraints is None:
-            num_classes = len(np.unique(y))
             num_constraints = 40 * num_classes * (num_classes - 1)
 
         classes = np.unique(y).astype(int)
         K = len(classes)
         N, p = X.shape
         pi = np.zeros(K)
+        num_constraints_per_class = int(num_constraints / num_classes)
         S = np.zeros((K, p, p))
 
         for k in classes:
@@ -250,8 +252,8 @@ class SPDMeanSCM(MahalanobisMixin, TransformerMixin):
 
             # create positive pairs for the k-th class
             X_k = X[mask, :]
-            a = rnd.randint(X_k.shape[0], size=num_constraints)
-            b = rnd.randint(X_k.shape[0], size=num_constraints)
+            a = rnd.randint(X_k.shape[0], size=num_constraints_per_class)
+            b = rnd.randint(X_k.shape[0], size=num_constraints_per_class)
 
             # compute SCM on the similarity vectors
             tmp = X_k[a] - X_k[b]
@@ -387,16 +389,17 @@ class RML(MahalanobisMixin, TransformerMixin):
 
         rnd.seed(random_state)
         X, y = self._prepare_inputs(X, y, ensure_min_samples=2)
+        num_classes = len(np.unique(y))
 
         if num_constraints is None:
-            num_classes = len(np.unique(y))
             num_constraints = 40 * num_classes * (num_classes - 1)
 
         classes = np.unique(y).astype(int)
         K = len(classes)
         N, p = X.shape
         pi = np.zeros(K)
-        S = np.zeros((K, num_constraints, p))
+        num_constraints_per_class = int(num_constraints / num_classes)
+        S = np.zeros((K, num_constraints_per_class, p))
 
         for k in classes:
             mask = (y == k)
@@ -406,8 +409,8 @@ class RML(MahalanobisMixin, TransformerMixin):
 
             # create positive pairs for the k-th class
             X_k = X[mask, :]
-            a = rnd.randint(X_k.shape[0], size=num_constraints)
-            b = rnd.randint(X_k.shape[0], size=num_constraints)
+            a = rnd.randint(X_k.shape[0], size=num_constraints_per_class)
+            b = rnd.randint(X_k.shape[0], size=num_constraints_per_class)
 
             # compute the x_i - x_j
             S[k, :, :] = X_k[a] - X_k[b]

@@ -208,6 +208,7 @@ def main(
                     metric_learner = RML(rho, divergence='Riemannian',
                                          regularization_param=reg,
                                          init='SCM', manifold='SPD',
+                                         num_constraints=num_constraints,
                                          random_state=123)
                     RML_evaluate(metric_learner, metric_name)
 
@@ -222,6 +223,7 @@ def main(
                     metric_learner = RML(rho, divergence='Riemannian',
                                          regularization_param=reg,
                                          init='SCM', manifold='SSPD',
+                                         num_constraints=num_constraints,
                                          random_state=123)
                     RML_evaluate(metric_learner, metric_name)
 
