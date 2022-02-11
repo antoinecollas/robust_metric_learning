@@ -10,7 +10,7 @@ import pymanopt
 from pymanopt import Problem
 from pymanopt.manifolds import (HermitianPositiveDefinite,
                                 SpecialHermitianPositiveDefinite)
-from pymanopt.solvers import ConjugateGradient
+from pymanopt.solvers import ConjugateGradient, SteepestDescent
 from sklearn.base import TransformerMixin
 
 from .matrix_operators import logm, powm
@@ -356,6 +356,7 @@ class RML(MahalanobisMixin, TransformerMixin):
     def __init__(self, rho=None, divergence='Riemannian',
                  regularization_param=0.1,
                  init='SCM', manifold='SPD',
+                 solver='ConjugateGradient',
                  num_constraints=None, preprocessor=None,
                  random_state=None):
         super(RML, self).__init__(preprocessor)
@@ -367,6 +368,7 @@ class RML(MahalanobisMixin, TransformerMixin):
         self.regularization_param = regularization_param
         self.init = init
         self.manifold = manifold
+        self.solver = solver
         self.num_constraints = num_constraints
         self.random_state = random_state
 
@@ -385,6 +387,7 @@ class RML(MahalanobisMixin, TransformerMixin):
         num_constraints = self.num_constraints
         init = self.init
         manifold_name = self.manifold
+        solver = self.solver
         random_state = self.random_state
 
         rnd.seed(random_state)
@@ -467,10 +470,18 @@ class RML(MahalanobisMixin, TransformerMixin):
                 tmp = init_params[k, :, :]
                 init_params[k, :, :] = tmp / (jla.det(tmp) ** (1 / p))
 
-        # solve
-        solver = ConjugateGradient(
+        # solver
+        if solver == 'ConjugateGradient':
+            solver = ConjugateGradient
+        elif solver == 'SteepestDescent':
+            solver = SteepestDescent
+        else:
+            raise ValueError('Wrong optimizer...')
+        solver = solver(
             maxiter=1e3, minstepsize=1e-10,
             mingradnorm=1e-3, logverbosity=2)
+
+        # solve
         problem = Problem(manifold=manifold, cost=cost,
                           egrad=egrad, verbosity=0)
         A, _ = solver.solve(problem, x=init_params)
