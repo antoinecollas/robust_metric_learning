@@ -40,7 +40,7 @@ def main(
                 return 200 * n_classes * (n_classes - 1)
         else:
             def NUM_CONST(n_classes):
-                return 40 * n_classes * (n_classes - 1)
+                return 120 * n_classes * (n_classes - 1)
 
         if verbose >= 1:
             print()
