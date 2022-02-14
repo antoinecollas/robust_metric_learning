@@ -40,7 +40,7 @@ def main(
                 return 200 * n_classes * (n_classes - 1)
         else:
             def NUM_CONST(n_classes):
-                return 120 * n_classes * (n_classes - 1)
+                return 50 * n_classes * (n_classes - 1)
 
         if verbose >= 1:
             print()
@@ -188,7 +188,6 @@ def main(
 
                 # RML
                 def RML_evaluate(metric_learner, metric_name):
-
                     pipe = Pipeline(
                         [(metric_name, metric_learner),
                          ('classifier', clf)])
@@ -276,7 +275,7 @@ def main(
 
 if __name__ == '__main__':
     RANDOM_STATE = 0
-    DATASETS = ['wine', 'vehicle', 'iris']
+    DATASETS = ['iris', 'wine', 'vehicle']
     N_RUNS = 40
     TEST_SIZE = 0.5
     FRACTIONS_MISLABELING = [0, 0.05, 0.1, 0.15, 0.2]

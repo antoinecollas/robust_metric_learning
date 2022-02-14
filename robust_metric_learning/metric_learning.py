@@ -397,6 +397,10 @@ class RML(MahalanobisMixin, TransformerMixin):
         if num_constraints is None:
             num_constraints = 40 * num_classes * (num_classes - 1)
 
+        # the nb of constraints is doubled to be consistent
+        # with other metric learning methods such as ITML or GMML
+        num_constraints = 2 * num_constraints
+
         classes = np.unique(y).astype(int)
         K = len(classes)
         N, p = X.shape
