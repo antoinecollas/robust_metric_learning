@@ -357,6 +357,9 @@ class RML(MahalanobisMixin, TransformerMixin):
                  regularization_param=0.1,
                  init='SCM', manifold='SPD',
                  solver='ConjugateGradient',
+                 maxiter=1e3,
+                 minstepsize=1e-10,
+                 mingradnorm=1e-3,
                  num_constraints=None, preprocessor=None,
                  random_state=None):
         super(RML, self).__init__(preprocessor)
@@ -369,6 +372,9 @@ class RML(MahalanobisMixin, TransformerMixin):
         self.init = init
         self.manifold = manifold
         self.solver = solver
+        self.maxiter = maxiter
+        self.minstepsize = minstepsize
+        self.mingradnorm = mingradnorm
         self.num_constraints = num_constraints
         self.random_state = random_state
 
@@ -388,6 +394,9 @@ class RML(MahalanobisMixin, TransformerMixin):
         init = self.init
         manifold_name = self.manifold
         solver = self.solver
+        maxiter = self.maxiter
+        minstepsize = self.minstepsize
+        mingradnorm = self.mingradnorm
         random_state = self.random_state
 
         rnd.seed(random_state)
@@ -482,13 +491,14 @@ class RML(MahalanobisMixin, TransformerMixin):
         else:
             raise ValueError('Wrong optimizer...')
         solver = solver(
-            maxiter=1e3, minstepsize=1e-10,
-            mingradnorm=1e-3, logverbosity=2)
+            maxiter=maxiter, minstepsize=minstepsize,
+            mingradnorm=mingradnorm, logverbosity=2)
 
         # solve
         problem = Problem(manifold=manifold, cost=cost,
                           egrad=egrad, verbosity=0)
-        A, _ = solver.solve(problem, x=init_params)
+        A, infos = solver.solve(problem, x=init_params)
+        self.solver_infos = infos
         A = A[0, :, :]
         A = powm(A, -1)
 

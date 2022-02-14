@@ -2,6 +2,7 @@ from sklearn.neighbors import KNeighborsClassifier
 
 from examples.datasets import main as main_datasets
 from examples.mislabeling import main as main_mislabeling
+from examples.speed_convergence import main as main_speed_convergence
 
 
 def test_datasets():
@@ -30,5 +31,19 @@ def test_mislabeling():
         fractions_mislabeling=FRACTIONS_MISLABELING,
         n_neighbors=N_NEIGHBORS,
         clf=CLF,
+        verbose=VERBOSE
+    )
+
+
+def test_speed_convergence():
+    RANDOM_STATE = 0
+    MAX_ITER = 5
+    DATASETS = ['iris', 'wine', 'vehicle']
+    VERBOSE = 0
+
+    main_speed_convergence(
+        random_state=RANDOM_STATE,
+        maxiter=MAX_ITER,
+        datasets=DATASETS,
         verbose=VERBOSE
     )
