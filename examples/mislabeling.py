@@ -132,14 +132,29 @@ def main(
                 metric_learner = ITML_Supervised(
                     gamma=gamma,
                     num_constraints=num_constraints,
+                    prior='identity',
                     random_state=random_state)
                 pipe = Pipeline(
                     [(metric_name, metric_learner), ('classifier', clf)]
                 )
                 pipe.fit(X_train, y_train)
-                # A = pipe.named_steps[metric_name].components_
-                # M = A.T @ A
-                # print(np.linalg.eigvals(M))
+                clf_predict_evaluate(
+                    X_test, y_test, metrics_names, metric_name,
+                    pipe, errors_dict)
+
+                # ITML - covariance
+                metric_name = 'ITML - SCM'
+                if verbose >= 2:
+                    print('Metric name:', metric_name)
+                metric_learner = ITML_Supervised(
+                    gamma=gamma,
+                    num_constraints=num_constraints,
+                    prior='covariance',
+                    random_state=random_state)
+                pipe = Pipeline(
+                    [(metric_name, metric_learner), ('classifier', clf)]
+                )
+                pipe.fit(X_train, y_train)
                 clf_predict_evaluate(
                     X_test, y_test, metrics_names, metric_name,
                     pipe, errors_dict)
