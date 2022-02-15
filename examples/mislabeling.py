@@ -291,7 +291,7 @@ def main(
 if __name__ == '__main__':
     RANDOM_STATE = 0
     DATASETS = ['iris', 'wine', 'vehicle']
-    N_RUNS = 40
+    N_RUNS = 200
     TEST_SIZE = 0.5
     FRACTIONS_MISLABELING = [0, 0.05, 0.1, 0.15, 0.2]
     N_NEIGHBORS = 5
