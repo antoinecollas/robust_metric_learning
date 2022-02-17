@@ -201,6 +201,8 @@ def main(
                 # #############################
 
                 # RGML
+                REG = 0.05
+
                 def RGML_evaluate(metric_learner, metric_name):
                     pipe = Pipeline(
                         [(metric_name, metric_learner),
@@ -216,11 +218,11 @@ def main(
                     return t
 
                 metric_name = metric_name_base + '_Gaussian'
-                metric_name += '_' + str(reg)
+                metric_name += '_' + str(REG)
                 if verbose >= 2:
                     print('Metric name:', metric_name)
                 metric_learner = RGML(rho, divergence='Riemannian',
-                                      regularization_param=0.05,
+                                      regularization_param=REG,
                                       init='SCM', manifold='SPD',
                                       num_constraints=num_constraints,
                                       random_state=random_state)
@@ -230,23 +232,19 @@ def main(
                     return p * jnp.log(t)
 
                 metric_name = metric_name_base + '_Tyler'
-                metric_name += '_' + str(reg)
+                metric_name += '_' + str(REG)
                 if verbose >= 2:
                     print('Metric name:', metric_name)
                 metric_learner = RGML(rho, divergence='Riemannian',
-                                      regularization_param=0.05,
+                                      regularization_param=REG,
                                       init='SCM', manifold='SSPD',
                                       num_constraints=num_constraints,
                                       random_state=random_state)
                 RGML_evaluate(metric_learner, metric_name)
 
-            elapsed_time = time.time() - start_time
-            if verbose >= 1:
-                print('Elapsed time (hh:mm:ss):',
-                      time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
-
             # save results
             for metric_name in metrics_names:
+                assert len(errors_dict[metric_name]) == n_runs
                 if metric_name not in std_errors_dict_frac_mislabels:
                     mean_errors_dict_frac_mislabels[metric_name] = list()
                     std_errors_dict_frac_mislabels[metric_name] = list()
@@ -254,6 +252,11 @@ def main(
                     np.mean(errors_dict[metric_name]) * 100)
                 std_errors_dict_frac_mislabels[metric_name].append(
                     np.std(errors_dict[metric_name]) * 100)
+
+        elapsed_time = time.time() - start_time
+        if verbose >= 1:
+            print('Elapsed time (hh:mm:ss):',
+                  time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
 
         # plot and save
         x = np.array(fractions_mislabeling) * 100
