@@ -242,7 +242,7 @@ def main(
 
             elapsed_time = time.time() - start_time
             if verbose >= 1:
-                print('Elapsed time:',
+                print('Elapsed time (hh:mm:ss):',
                       time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
 
             # save results
