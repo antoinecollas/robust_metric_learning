@@ -7,7 +7,7 @@ from numpy.testing import assert_allclose
 from robust_metric_learning.data_loader import load_data
 from robust_metric_learning.metric_learning import (Identity, SCM, SPD_mean,
                                                     GMML_Supervised, MeanSCM,
-                                                    SPDMeanSCM, RML)
+                                                    SPDMeanSCM, RGML)
 
 
 def _check_SPD(M):
@@ -147,7 +147,7 @@ def test_SPDMeanSCM():
     _check_SPD(M)
 
 
-def test_RML_Gaussian():
+def test_RGML_Gaussian():
     X, y = load_data('wine')
 
     # test consistency
@@ -155,14 +155,14 @@ def test_RML_Gaussian():
     def rho(t):
         return t
 
-    metric_learner = RML(rho, regularization_param=0.1,
+    metric_learner = RGML(rho, regularization_param=0.1,
                          init='SCM', manifold='SPD',
                          random_state=123)
     A = metric_learner.fit(X, y).components_
     M1 = A.T @ A
     _check_SPD(M1)
 
-    metric_learner = RML(rho, regularization_param=0.1,
+    metric_learner = RGML(rho, regularization_param=0.1,
                          init='random', manifold='SPD',
                          random_state=123)
     A = metric_learner.fit(X, y).components_
@@ -173,7 +173,7 @@ def test_RML_Gaussian():
 
     # test the different divergences
 
-    metric_learner = RML(rho, divergence='Riemannian',
+    metric_learner = RGML(rho, divergence='Riemannian',
                          regularization_param=0.1,
                          init='random', manifold='SPD',
                          random_state=123)
@@ -181,7 +181,7 @@ def test_RML_Gaussian():
     M = A.T @ A
     _check_SPD(M)
 
-    metric_learner = RML(rho, divergence='KL-left',
+    metric_learner = RGML(rho, divergence='KL-left',
                          regularization_param=0.1,
                          init='random', manifold='SPD',
                          random_state=123)
@@ -189,7 +189,7 @@ def test_RML_Gaussian():
     M = A.T @ A
     _check_SPD(M)
 
-    metric_learner = RML(rho, divergence='KL-right',
+    metric_learner = RGML(rho, divergence='KL-right',
                          regularization_param=0.1,
                          init='random', manifold='SPD',
                          random_state=123)
@@ -198,7 +198,7 @@ def test_RML_Gaussian():
     _check_SPD(M)
 
 
-def test_RML_Tyler():
+def test_RGML_Tyler():
     X, y = load_data('wine')
     p = X.shape[1]
 
@@ -207,7 +207,7 @@ def test_RML_Tyler():
     def rho(t):
         return p * jnp.log(t)
 
-    metric_learner = RML(rho, divergence='Riemannian',
+    metric_learner = RGML(rho, divergence='Riemannian',
                          regularization_param=0.1,
                          init='SCM', manifold='SSPD',
                          random_state=123)
@@ -215,7 +215,7 @@ def test_RML_Tyler():
     M1 = A.T @ A
     _check_SPD(M1)
 
-    metric_learner = RML(rho, divergence='Riemannian',
+    metric_learner = RGML(rho, divergence='Riemannian',
                          regularization_param=0.1,
                          init='random', manifold='SSPD',
                          random_state=123)
@@ -228,7 +228,7 @@ def test_RML_Tyler():
     # TODO: make the ellipiticity divergences work...
 
 
-def test_RML_Iris_dataset():
+def test_RGML_Iris_dataset():
     X, y = load_data('iris')
     p = X.shape[1]
 
@@ -237,7 +237,7 @@ def test_RML_Iris_dataset():
     def rho(t):
         return t
 
-    metric_learner = RML(rho, divergence='Riemannian',
+    metric_learner = RGML(rho, divergence='Riemannian',
                          regularization_param=0.1,
                          init='SCM', manifold='SPD',
                          random_state=123)
@@ -250,7 +250,7 @@ def test_RML_Iris_dataset():
     def rho(t):
         return p * jnp.log(t)
 
-    metric_learner = RML(rho, divergence='Riemannian',
+    metric_learner = RGML(rho, divergence='Riemannian',
                          regularization_param=0.1,
                          init='SCM', manifold='SSPD',
                          random_state=123)

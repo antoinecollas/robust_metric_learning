@@ -213,7 +213,7 @@ class SPDMeanSCM(MahalanobisMixin, TransformerMixin):
         self.random_state = random_state
 
     def fit(self, X, y):
-        """Create constraints from labels and learn the RML model.
+        """
         Parameters
         ----------
         X : (n x d) matrix
@@ -277,11 +277,11 @@ class SPDMeanSCM(MahalanobisMixin, TransformerMixin):
         return self
 
 
-# RML: Robust Metric Learning
+# RGML: Robust Geometric Metric Learning
 # Robust pooled covariance matrix
 
 
-def _create_cost_egrad_RML(rho, divergence, pi, X, reg):
+def _create_cost_egrad_RGML(rho, divergence, pi, X, reg):
     p = X.shape[1]
 
     def squared_Riemannian_distance(A, B):
@@ -347,7 +347,7 @@ def _create_cost_egrad_RML(rho, divergence, pi, X, reg):
     return cost, auto_egrad
 
 
-class RML(MahalanobisMixin, TransformerMixin):
+class RGML(MahalanobisMixin, TransformerMixin):
     def __init__(self, rho=None, divergence='Riemannian',
                  regularization_param=0.1,
                  init='SCM', manifold='SPD',
@@ -357,7 +357,7 @@ class RML(MahalanobisMixin, TransformerMixin):
                  mingradnorm=1e-3,
                  num_constraints=None, preprocessor=None,
                  random_state=None):
-        super(RML, self).__init__(preprocessor)
+        super(RGML, self).__init__(preprocessor)
         if rho is None:
             def rho(t):
                 return t
@@ -374,7 +374,7 @@ class RML(MahalanobisMixin, TransformerMixin):
         self.random_state = random_state
 
     def fit(self, X, y):
-        """Create constraints from labels and learn the RML model.
+        """Create constraints from labels and learn the RGML model.
         Parameters
         ----------
         X : (n x d) matrix
@@ -432,7 +432,7 @@ class RML(MahalanobisMixin, TransformerMixin):
                 mask = jla.norm(S[k, :, :], axis=1) < THRESHOLD
 
         # cost
-        cost, egrad = _create_cost_egrad_RML(rho, divergence, pi, S, reg)
+        cost, egrad = _create_cost_egrad_RGML(rho, divergence, pi, S, reg)
 
         # manifold
         if manifold_name == 'SPD':

@@ -17,7 +17,7 @@ from robust_metric_learning.data_loader import load_data
 from robust_metric_learning.evaluation import\
         create_directory, clf_predict_evaluate
 from robust_metric_learning.metric_learning import\
-        Identity, GMML_Supervised, RML
+        Identity, GMML_Supervised, RGML
 
 
 def main(
@@ -197,8 +197,8 @@ def main(
                 # ######### HOME MADE #########
                 # #############################
 
-                # RML
-                def RML_evaluate(metric_learner, metric_name):
+                # RGML
+                def RGML_evaluate(metric_learner, metric_name):
                     pipe = Pipeline(
                         [(metric_name, metric_learner),
                          ('classifier', clf)])
@@ -207,7 +207,7 @@ def main(
                         X_test, y_test, metrics_names, metric_name,
                         pipe, errors_dict)
 
-                metric_name_base = 'RML'
+                metric_name_base = 'RGML'
 
                 def rho(t):
                     return t
@@ -217,12 +217,12 @@ def main(
                 metric_name += '_' + str(reg)
                 if verbose >= 2:
                     print('Metric name:', metric_name)
-                metric_learner = RML(rho, divergence='Riemannian',
+                metric_learner = RGML(rho, divergence='Riemannian',
                                      regularization_param=reg,
                                      init='SCM', manifold='SPD',
                                      num_constraints=num_constraints,
                                      random_state=random_state)
-                RML_evaluate(metric_learner, metric_name)
+                RGML_evaluate(metric_learner, metric_name)
 
                 def rho(t):
                     return p * jnp.log(t)
@@ -232,12 +232,12 @@ def main(
                 metric_name += '_' + str(reg)
                 if verbose >= 2:
                     print('Metric name:', metric_name)
-                metric_learner = RML(rho, divergence='Riemannian',
+                metric_learner = RGML(rho, divergence='Riemannian',
                                      regularization_param=reg,
                                      init='SCM', manifold='SSPD',
                                      num_constraints=num_constraints,
                                      random_state=random_state)
-                RML_evaluate(metric_learner, metric_name)
+                RGML_evaluate(metric_learner, metric_name)
 
             # save results
             for metric_name in metrics_names:

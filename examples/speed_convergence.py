@@ -7,7 +7,7 @@ import tikzplotlib
 
 from robust_metric_learning.data_loader import load_data
 from robust_metric_learning.evaluation import create_directory
-from robust_metric_learning.metric_learning import RML
+from robust_metric_learning.metric_learning import RGML
 
 
 def plot_solver_infos(path_to_save, dataset_name,
@@ -71,12 +71,12 @@ def main(
             to_print += ' #####################'
             print(to_print)
 
-        # RML
-        metric_name_base = 'RML'
+        # RGML
+        metric_name_base = 'RGML'
         reg = 0.05
 
         if verbose >= 1:
-            to_print = '##################### RML Gaussian'
+            to_print = '##################### RGML Gaussian'
             to_print += ' #####################'
             print(to_print)
 
@@ -87,7 +87,7 @@ def main(
         metric_name += '_' + str(reg)
         if verbose >= 2:
             print('Metric name:', metric_name)
-        metric_learner = RML(rho, divergence='Riemannian',
+        metric_learner = RGML(rho, divergence='Riemannian',
                              regularization_param=reg,
                              init='SCM', manifold='SPD',
                              solver='SteepestDescent',
@@ -100,7 +100,7 @@ def main(
         solver_infos_Gaussian = metric_learner.solver_infos
 
         if verbose >= 1:
-            to_print = '##################### RML Tyler'
+            to_print = '##################### RGML Tyler'
             to_print += ' #####################'
             print(to_print)
 
@@ -111,7 +111,7 @@ def main(
         metric_name += '_' + str(reg)
         if verbose >= 2:
             print('Metric name:', metric_name)
-        metric_learner = RML(rho, divergence='Riemannian',
+        metric_learner = RGML(rho, divergence='Riemannian',
                              regularization_param=reg,
                              init='SCM', manifold='SSPD',
                              solver='SteepestDescent',
