@@ -88,14 +88,14 @@ def main(
         if verbose >= 2:
             print('Metric name:', metric_name)
         metric_learner = RGML(rho, divergence='Riemannian',
-                             regularization_param=reg,
-                             init='SCM', manifold='SPD',
-                             solver='SteepestDescent',
-                             maxiter=maxiter,
-                             minstepsize=0,
-                             mingradnorm=0,
-                             num_constraints=num_constraints,
-                             random_state=random_state)
+                              regularization_param=reg,
+                              init='SCM', manifold='SPD',
+                              solver='SteepestDescent',
+                              maxiter=maxiter,
+                              minstepsize=0,
+                              mingradnorm=0,
+                              num_constraints=num_constraints,
+                              random_state=random_state)
         metric_learner.fit(X, y)
         solver_infos_Gaussian = metric_learner.solver_infos
 
@@ -112,14 +112,14 @@ def main(
         if verbose >= 2:
             print('Metric name:', metric_name)
         metric_learner = RGML(rho, divergence='Riemannian',
-                             regularization_param=reg,
-                             init='SCM', manifold='SSPD',
-                             solver='SteepestDescent',
-                             maxiter=maxiter,
-                             minstepsize=0,
-                             mingradnorm=0,
-                             num_constraints=num_constraints,
-                             random_state=random_state)
+                              regularization_param=reg,
+                              init='SCM', manifold='SSPD',
+                              solver='SteepestDescent',
+                              maxiter=maxiter,
+                              minstepsize=0,
+                              mingradnorm=0,
+                              num_constraints=num_constraints,
+                              random_state=random_state)
         metric_learner.fit(X, y)
         solver_infos_Tyler = metric_learner.solver_infos
 

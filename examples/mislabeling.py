@@ -212,31 +212,29 @@ def main(
                 def rho(t):
                     return t
 
-                reg = 0.05
                 metric_name = metric_name_base + '_Gaussian'
                 metric_name += '_' + str(reg)
                 if verbose >= 2:
                     print('Metric name:', metric_name)
                 metric_learner = RGML(rho, divergence='Riemannian',
-                                     regularization_param=reg,
-                                     init='SCM', manifold='SPD',
-                                     num_constraints=num_constraints,
-                                     random_state=random_state)
+                                      regularization_param=0.05,
+                                      init='SCM', manifold='SPD',
+                                      num_constraints=num_constraints,
+                                      random_state=random_state)
                 RGML_evaluate(metric_learner, metric_name)
 
                 def rho(t):
                     return p * jnp.log(t)
 
-                reg = 0.05
                 metric_name = metric_name_base + '_Tyler'
                 metric_name += '_' + str(reg)
                 if verbose >= 2:
                     print('Metric name:', metric_name)
                 metric_learner = RGML(rho, divergence='Riemannian',
-                                     regularization_param=reg,
-                                     init='SCM', manifold='SSPD',
-                                     num_constraints=num_constraints,
-                                     random_state=random_state)
+                                      regularization_param=0.05,
+                                      init='SCM', manifold='SSPD',
+                                      num_constraints=num_constraints,
+                                      random_state=random_state)
                 RGML_evaluate(metric_learner, metric_name)
 
             # save results

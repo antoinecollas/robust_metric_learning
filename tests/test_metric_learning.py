@@ -156,15 +156,15 @@ def test_RGML_Gaussian():
         return t
 
     metric_learner = RGML(rho, regularization_param=0.1,
-                         init='SCM', manifold='SPD',
-                         random_state=123)
+                          init='SCM', manifold='SPD',
+                          random_state=123)
     A = metric_learner.fit(X, y).components_
     M1 = A.T @ A
     _check_SPD(M1)
 
     metric_learner = RGML(rho, regularization_param=0.1,
-                         init='random', manifold='SPD',
-                         random_state=123)
+                          init='random', manifold='SPD',
+                          random_state=123)
     A = metric_learner.fit(X, y).components_
     M2 = A.T @ A
     _check_SPD(M2)
@@ -174,25 +174,25 @@ def test_RGML_Gaussian():
     # test the different divergences
 
     metric_learner = RGML(rho, divergence='Riemannian',
-                         regularization_param=0.1,
-                         init='random', manifold='SPD',
-                         random_state=123)
+                          regularization_param=0.1,
+                          init='random', manifold='SPD',
+                          random_state=123)
     A = metric_learner.fit(X, y).components_
     M = A.T @ A
     _check_SPD(M)
 
     metric_learner = RGML(rho, divergence='KL-left',
-                         regularization_param=0.1,
-                         init='random', manifold='SPD',
-                         random_state=123)
+                          regularization_param=0.1,
+                          init='random', manifold='SPD',
+                          random_state=123)
     A = metric_learner.fit(X, y).components_
     M = A.T @ A
     _check_SPD(M)
 
     metric_learner = RGML(rho, divergence='KL-right',
-                         regularization_param=0.1,
-                         init='random', manifold='SPD',
-                         random_state=123)
+                          regularization_param=0.1,
+                          init='random', manifold='SPD',
+                          random_state=123)
     A = metric_learner.fit(X, y).components_
     M = A.T @ A
     _check_SPD(M)
@@ -208,17 +208,17 @@ def test_RGML_Tyler():
         return p * jnp.log(t)
 
     metric_learner = RGML(rho, divergence='Riemannian',
-                         regularization_param=0.1,
-                         init='SCM', manifold='SSPD',
-                         random_state=123)
+                          regularization_param=0.1,
+                          init='SCM', manifold='SSPD',
+                          random_state=123)
     A = metric_learner.fit(X, y).components_
     M1 = A.T @ A
     _check_SPD(M1)
 
     metric_learner = RGML(rho, divergence='Riemannian',
-                         regularization_param=0.1,
-                         init='random', manifold='SSPD',
-                         random_state=123)
+                          regularization_param=0.1,
+                          init='random', manifold='SSPD',
+                          random_state=123)
     A = metric_learner.fit(X, y).components_
     M2 = A.T @ A
     _check_SPD(M2)
@@ -238,9 +238,9 @@ def test_RGML_Iris_dataset():
         return t
 
     metric_learner = RGML(rho, divergence='Riemannian',
-                         regularization_param=0.1,
-                         init='SCM', manifold='SPD',
-                         random_state=123)
+                          regularization_param=0.1,
+                          init='SCM', manifold='SPD',
+                          random_state=123)
     A = metric_learner.fit(X, y).components_
     M = A.T @ A
     _check_SPD(M)
@@ -251,9 +251,9 @@ def test_RGML_Iris_dataset():
         return p * jnp.log(t)
 
     metric_learner = RGML(rho, divergence='Riemannian',
-                         regularization_param=0.1,
-                         init='SCM', manifold='SSPD',
-                         random_state=123)
+                          regularization_param=0.1,
+                          init='SCM', manifold='SSPD',
+                          random_state=123)
     A = metric_learner.fit(X, y).components_
     M = A.T @ A
     _check_SPD(M)
