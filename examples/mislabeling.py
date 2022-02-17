@@ -35,11 +35,12 @@ def main(
     path = create_directory('mislabeling')
     rnd.seed(random_state)
 
-    for dataset in datasets:
-        def NUM_CONST(n_classes):
-            return 75 * n_classes * (n_classes - 1)
+    def NUM_CONST(n_classes):
+        return 75 * n_classes * (n_classes - 1)
 
+    for dataset in datasets:
         start_time = time.time()
+
         if verbose >= 1:
             print()
             print('##############################')
