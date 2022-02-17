@@ -123,11 +123,6 @@ class GMML_Supervised(_BaseGMML, TransformerMixin):
         pos_neg = c.positive_negative_pairs(num_constraints,
                                             random_state=self.random_state)
         pairs, y = wrap_pairs(X, pos_neg)
-        # check number of constraints
-        N, _, _ = pairs[y == 1].shape
-        assert N == num_constraints
-        N, _, _ = pairs[y == -1].shape
-        assert N == num_constraints
 
         return _BaseGMML._fit(self, pairs, y)
 
@@ -405,10 +400,6 @@ class RML(MahalanobisMixin, TransformerMixin):
 
         if num_constraints is None:
             num_constraints = 40 * num_classes * (num_classes - 1)
-
-        # the nb of constraints is doubled to be consistent
-        # with other metric learning methods such as ITML or GMML
-        num_constraints = 2 * num_constraints
 
         classes = np.unique(y).astype(int)
         K = len(classes)

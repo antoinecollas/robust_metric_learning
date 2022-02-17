@@ -35,12 +35,8 @@ def main(
     rnd.seed(random_state)
 
     for dataset in datasets:
-        if dataset in ['mnist', 'isolet']:
-            def NUM_CONST(n_classes):
-                return 200 * n_classes * (n_classes - 1)
-        else:
-            def NUM_CONST(n_classes):
-                return 50 * n_classes * (n_classes - 1)
+        def NUM_CONST(n_classes):
+            return 75 * n_classes * (n_classes - 1)
 
         if verbose >= 1:
             print()
@@ -216,32 +212,32 @@ def main(
                 def rho(t):
                     return t
 
-                for reg in [1, 0.1, 0.05]:
-                    metric_name = metric_name_base + '_Gaussian'
-                    metric_name += '_' + str(reg)
-                    if verbose >= 2:
-                        print('Metric name:', metric_name)
-                    metric_learner = RML(rho, divergence='Riemannian',
-                                         regularization_param=reg,
-                                         init='SCM', manifold='SPD',
-                                         num_constraints=num_constraints,
-                                         random_state=random_state)
-                    RML_evaluate(metric_learner, metric_name)
+                reg = 0.05
+                metric_name = metric_name_base + '_Gaussian'
+                metric_name += '_' + str(reg)
+                if verbose >= 2:
+                    print('Metric name:', metric_name)
+                metric_learner = RML(rho, divergence='Riemannian',
+                                     regularization_param=reg,
+                                     init='SCM', manifold='SPD',
+                                     num_constraints=num_constraints,
+                                     random_state=random_state)
+                RML_evaluate(metric_learner, metric_name)
 
                 def rho(t):
                     return p * jnp.log(t)
 
-                for reg in [1, 0.1, 0.05]:
-                    metric_name = metric_name_base + '_Tyler'
-                    metric_name += '_' + str(reg)
-                    if verbose >= 2:
-                        print('Metric name:', metric_name)
-                    metric_learner = RML(rho, divergence='Riemannian',
-                                         regularization_param=reg,
-                                         init='SCM', manifold='SSPD',
-                                         num_constraints=num_constraints,
-                                         random_state=random_state)
-                    RML_evaluate(metric_learner, metric_name)
+                reg = 0.05
+                metric_name = metric_name_base + '_Tyler'
+                metric_name += '_' + str(reg)
+                if verbose >= 2:
+                    print('Metric name:', metric_name)
+                metric_learner = RML(rho, divergence='Riemannian',
+                                     regularization_param=reg,
+                                     init='SCM', manifold='SSPD',
+                                     num_constraints=num_constraints,
+                                     random_state=random_state)
+                RML_evaluate(metric_learner, metric_name)
 
             # save results
             for metric_name in metrics_names:
