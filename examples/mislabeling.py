@@ -10,6 +10,7 @@ from prettytable import PrettyTable
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
+import time
 import tikzplotlib
 from tqdm import tqdm
 
@@ -38,6 +39,7 @@ def main(
         def NUM_CONST(n_classes):
             return 75 * n_classes * (n_classes - 1)
 
+        start_time = time.time()
         if verbose >= 1:
             print()
             print('##############################')
@@ -236,6 +238,11 @@ def main(
                                       num_constraints=num_constraints,
                                       random_state=random_state)
                 RGML_evaluate(metric_learner, metric_name)
+
+            elapsed_time = time.time() - start_time
+            if verbose >= 1:
+                print('Elapsed time:',
+                      time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
 
             # save results
             for metric_name in metrics_names:
