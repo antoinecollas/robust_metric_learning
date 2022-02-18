@@ -88,6 +88,9 @@ def main(
                     new_y_train[idx] = new_class
                     frac_mislabel = np.sum(new_y_train != y_train)
                     frac_mislabel /= len(y_train)
+                tmp = np.sum(new_y_train != y_train) / len(y_train)
+                assert tmp >= frac_mislabel
+                assert tmp <= frac_mislabel + 0.01
                 y_train = new_y_train
 
                 # ##########################
