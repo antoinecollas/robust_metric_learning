@@ -149,7 +149,7 @@ def main(
                 if verbose >= 2:
                     print('Metric name:', metric_name)
                 metric_learner = ITML_Supervised(
-                    gamma=gamma,
+                    gamma=1,
                     num_constraints=num_constraints,
                     prior='covariance',
                     random_state=random_state)
