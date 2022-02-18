@@ -52,12 +52,13 @@ def main(
         _, p = X.shape
         n_classes = len(np.unique(y))
         num_constraints = NUM_CONST(n_classes)
-        metrics_names = list()
-        errors_dict = dict()
         mean_errors_dict_frac_mislabels = dict()
         std_errors_dict_frac_mislabels = dict()
 
         for fraction_mislabeling in fractions_mislabeling:
+            metrics_names = list()
+            errors_dict = dict()
+
             if verbose >= 1:
                 to_print = '##################### FRACTION MISLABELING:'
                 to_print += str(fraction_mislabeling)
