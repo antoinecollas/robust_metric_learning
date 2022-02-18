@@ -134,7 +134,7 @@ def main(
 if __name__ == '__main__':
     RANDOM_STATE = 0
     DATASETS = ['wine', 'vehicle', 'iris']
-    REGS = np.geomspace(start=5*1e-3, stop=5*1e-1, num=5)
+    REGS = np.geomspace(start=1e-4, stop=10, num=10)
     N_RUNS = 200
     TEST_SIZE = 0.5
     CLF = KNeighborsClassifier(n_neighbors=5, n_jobs=-1)
