@@ -162,16 +162,11 @@ def main(
                     pipe, errors_dict)
 
                 # GMML
-                if dataset in ['german', 'mnist', 'isolet']:
-                    reg = 0.1
-                else:
-                    reg = 0
-
                 metric_name = 'GMML - t=0'
                 if verbose >= 2:
                     print('Metric name:', metric_name)
                 metric_learner = GMML_Supervised(
-                    regularization_param=reg, balance_param=0,
+                    regularization_param=0, balance_param=0,
                     num_constraints=num_constraints,
                     random_state=random_state)
                 pipe = Pipeline(
