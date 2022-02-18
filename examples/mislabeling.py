@@ -125,9 +125,11 @@ def main(
                 if verbose >= 2:
                     print('Metric name:', metric_name)
                 if (dataset in ['iris']) and (frac_mislabel > 0):
-                    # the only way to make it work is to reduce gamma
-                    # however, returning the identity gives a very
+                    # in this setting, the only way to make it work
+                    # is to reduce gamma
+                    # returning the identity gives a very
                     # good performance in this setting
+                    # but returning the SCM is not so good
                     GAMMA = 0
                 else:
                     GAMMA = 1
@@ -149,7 +151,7 @@ def main(
                 if verbose >= 2:
                     print('Metric name:', metric_name)
                 metric_learner = ITML_Supervised(
-                    gamma=1,
+                    gamma=GAMMA,
                     num_constraints=num_constraints,
                     prior='covariance',
                     random_state=random_state)
