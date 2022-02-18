@@ -126,11 +126,13 @@ def main(
                     print('Metric name:', metric_name)
                 if (dataset in ['iris']) and (frac_mislabel > 0):
                     # the only way to make it work is to reduce gamma
-                    gamma = 0
+                    # however, returning the identity gives a very
+                    # good performance in this setting
+                    GAMMA = 0
                 else:
-                    gamma = 1
+                    GAMMA = 1
                 metric_learner = ITML_Supervised(
-                    gamma=gamma,
+                    gamma=GAMMA,
                     num_constraints=num_constraints,
                     prior='identity',
                     random_state=random_state)
