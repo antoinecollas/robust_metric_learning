@@ -40,7 +40,7 @@ def test_mislabeling():
 def test_speed_convergence():
     RANDOM_STATE = 0
     MAX_ITER = 5
-    DATASETS = ['iris', 'wine', 'vehicle']
+    DATASETS = ['wine']
     VERBOSE = 0
 
     main_speed_convergence(
