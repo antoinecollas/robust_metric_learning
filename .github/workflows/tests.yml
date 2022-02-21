@@ -1,4 +1,4 @@
-name: robust_metric_learning-package
+name: tests
 
 on: [push, pull_request]
 
