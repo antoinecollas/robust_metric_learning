@@ -8,3 +8,6 @@ pip install -r requirements.txt
 pip install --upgrade "jax[cpu]"
 pip install git+https://github.com/scikit-learn-contrib/metric-learn
 pip install git+https://github.com/antoinecollas/pymanopt
+
+# install package
+python setup.py install
