@@ -61,7 +61,6 @@ def SPD_mean(A, B, t=0.5):
 
 
 class _BaseGMML(MahalanobisMixin):
-    """Geometric Mean Metric Learning (GMML)"""
     def __init__(self, balance_param, regularization_param,
                  preprocessor=None):
         super(_BaseGMML, self).__init__(preprocessor)
@@ -105,14 +104,6 @@ class GMML_Supervised(_BaseGMML, TransformerMixin):
         self.num_constraints = num_constraints
 
     def fit(self, X, y):
-        """Create constraints from labels and learn the GMML model.
-        Parameters
-        ----------
-        X : (n x d) matrix
-          Input data, where each row corresponds to a single instance.
-        y : (n) array-like
-          Data labels.
-        """
         X, y = self._prepare_inputs(X, y, ensure_min_samples=2)
         num_constraints = self.num_constraints
         if num_constraints is None:
@@ -213,14 +204,6 @@ class SPDMeanSCM(MahalanobisMixin, TransformerMixin):
         self.random_state = random_state
 
     def fit(self, X, y):
-        """
-        Parameters
-        ----------
-        X : (n x d) matrix
-          Input data, where each row corresponds to a single instance.
-        y : (n) array-like
-          Data labels.
-        """
         random_state = self.random_state
         reg = self.regularization_param
         num_constraints = self.num_constraints
@@ -374,14 +357,6 @@ class RGML(MahalanobisMixin, TransformerMixin):
         self.random_state = random_state
 
     def fit(self, X, y):
-        """Create constraints from labels and learn the RGML model.
-        Parameters
-        ----------
-        X : (n x d) matrix
-          Input data, where each row corresponds to a single instance.
-        y : (n) array-like
-          Data labels.
-        """
         rho = self.rho
         divergence = self.divergence
         reg = self.regularization_param
