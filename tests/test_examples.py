@@ -3,6 +3,7 @@ from sklearn.neighbors import KNeighborsClassifier
 
 from examples.datasets import main as main_datasets
 from examples.mislabeling import main as main_mislabeling
+from examples.plot import main as main_plot
 from examples.reg_RGML import main as main_reg_RGML
 from examples.speed_convergence import main as main_speed_convergence
 
@@ -34,6 +35,20 @@ def test_mislabeling():
         n_neighbors=N_NEIGHBORS,
         clf=CLF,
         verbose=VERBOSE
+    )
+
+
+def test_plot():
+    RANDOM_STATE = 10
+    N = 100
+    NUM_CONSTRAINTS = 200
+    REG = 0.01
+
+    main_plot(
+        random_state=RANDOM_STATE,
+        N=N,
+        num_constraints=NUM_CONSTRAINTS,
+        reg=REG
     )
 
 
